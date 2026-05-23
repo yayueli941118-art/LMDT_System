@@ -22,55 +22,70 @@ st.set_page_config(page_title="劳动供给决策", page_icon="⚖️", layout="
 # ==========================================
 st.markdown("""
 <style>
-    html, body, [class*="css"] { 
-        font-family: 'Microsoft YaHei', 'JetBrains Mono', sans-serif !important;
-        background-color: #0b0f19; color: #e2e8f0;
+    /* ===== 1. 精准锁定全局App背景 ===== */
+    .stApp {
+        background-color: #0b0f19 !important;
     }
+
+    /* ===== 2. 侧边栏暗色背景 ===== */
+    section[data-testid="stSidebar"] {
+        background-color: #090d16 !important;
+        border-right: 1px solid rgba(56, 189, 248, 0.1) !important;
+    }
+
+    /* ===== 3. 核心文本全局亮白/灰蓝覆盖 ===== */
+    .stApp label, .stApp p, .stApp span, .stApp h1, .stApp h2, .stApp h3, .stApp h4 {
+        color: #e2e8f0 !important;
+    }
+
+    /* ===== 4. 滑块与单选框的标签颜色 ===== */
+    div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
+        color: #38bdf8 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Radio 选中态 */
+    div[data-testid="stRadio"] label[data-selected="true"] {
+        color: #00f2fe !important;
+        font-weight: 700 !important;
+    }
+
+    /* ===== 5. 赛博玻璃态卡片 ===== */
+    .tech-card {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+        border: 1px solid rgba(56, 189, 248, 0.15) !important;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    /* ===== 6. 标题指示灯 ===== */
+    .cyber-header {
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff !important;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    .cyber-header::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 24px;
+        background: #00f2fe;
+        margin-right: 12px;
+        border-radius: 3px;
+        box-shadow: 0 0 8px #00f2fe;
+    }
+
+    /* ===== 布局与隐藏 ===== */
     .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
     header {visibility: hidden;}
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    
-    .tech-card {
-        background: linear-gradient(145deg, #111827 0%, #1e293b 100%);
-        border: 1px solid rgba(56, 189, 248, 0.15);
-        border-radius: 14px;
-        padding: 24px;
-        margin-bottom: 18px;
-        box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
-    }
-    .cyber-header {
-        font-size: 20px;
-        font-weight: 700;
-        color: #38bdf8;
-        margin-bottom: 16px;
-        border-left: 4px solid #38bdf8;
-        padding-left: 12px;
-        letter-spacing: 1px;
-    }
-    
-    /* 步骤选择器高亮 */
-    div[data-testid="stRadio"] label {
-        color: #94a3b8 !important;
-        font-size: 15px !important;
-    }
-    div[data-testid="stRadio"] label[data-selected="true"] {
-        color: #38bdf8 !important;
-        font-weight: 700 !important;
-    }
-    
-    /* 滑块 */
-    .stSlider label { color: #cbd5e1 !important; font-weight: 500; }
-    
-    /* Metric增强 */
-    div[data-testid="stMetric"] {
-        background: rgba(56, 189, 248, 0.06);
-        border: 1px solid rgba(56, 189, 248, 0.12);
-        border-radius: 10px;
-        padding: 12px 16px;
-    }
-    div[data-testid="stMetric"] label { color: #64748b !important; }
-    div[data-testid="stMetricValue"] { color: #38bdf8 !important; font-family: 'JetBrains Mono', monospace; }
 </style>
 """, unsafe_allow_html=True)
 
