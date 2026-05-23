@@ -34,14 +34,20 @@ st.markdown("""
     }
 
     /* ===== 3. 核心文本全局亮白/灰蓝覆盖 ===== */
-    .stApp label, .stApp p, .stApp span,
+    .stApp,
+    .stApp p, .stApp span, .stApp div,
+    .stApp li, .stApp strong, .stApp b,
     .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-    .stApp li, .stApp strong, .stApp b, .stApp em, .stMarkdown {
+    div[data-testid="stMarkdownContainer"],
+    div[data-testid="stMarkdownContainer"] * {
         color: #e2e8f0 !important;
     }
     .stMarkdown table th, .stMarkdown table td {
         border-color: rgba(148, 163, 184, 0.3) !important;
         color: #cbd5e1 !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #e2e8f0 !important;
     }
 
     /* ===== 4. 滑块与单选框的标签颜色 ===== */
