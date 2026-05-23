@@ -29,7 +29,7 @@ with st.sidebar:
     ### 使用说明
     1. 学生完成实验后下载报告 (.md)
     2. 批量上传至此页面
-    3. 系统自动诊断班级知识盲区
+    3. 系统基于阈值规则辅助分析班级知识薄弱点
     
     ---
     ### 支持的报告类型
@@ -244,6 +244,58 @@ if all_data:
         st.metric("已署名", f"{filled}/{len(all_data)}")
     with c4:
         st.metric("主要实验", types.index[0] if len(types) > 0 else "—")
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # ========== ⚡ 阈值预警面板（基于数据的可视化辅助分析） ==========
+    st.markdown('<div class="card" style="border: 2px solid #f59e0b;">', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:20px; font-weight:700; color:#d97706;">⚡ 阈值预警面板</span>', unsafe_allow_html=True)
+    st.caption('基于预设教学阈值的自动学情提示（数据可视化辅助分析）')
+    
+    warning_count = 0
+    
+    # 检查1: 受教育年限过低
+    if "受教育年限" in df.columns:
+        edu_vals = pd.to_numeric(df["受教育年限"].dropna(), errors='coerce')
+        if len(edu_vals) > 0 and edu_vals.mean() < 14:
+            st.warning(f"⚠️ **人力资本投资认知预警**：班级平均受教育年限仅 {edu_vals.mean():.1f} 年（< 14 年阈值），{sum(edu_vals < 14)} 名学生的教育投资路径偏保守。建议讲解「教育溢价」实证数据。")
+            warning_count += 1
+    
+    # 检查2: 歧视系数过高
+    if "歧视系数" in df.columns:
+        disc_vals = pd.to_numeric(df["歧视系数"].dropna(), errors='coerce')
+        if len(disc_vals) > 0 and disc_vals.mean() > 15:
+            st.warning(f"⚠️ **歧视效应认知预警**：班级平均歧视系数 {disc_vals.mean():.1f}%（> 15% 阈值），{sum(disc_vals > 20)} 名学生设置超过 20%。需确认学生是否理解贝克尔偏好歧视模型的福利损失机制。")
+            warning_count += 1
+    
+    # 检查3: AI冲击认知偏差
+    if "AI替代冲击" in df.columns:
+        ai_vals = pd.to_numeric(df["AI替代冲击"].dropna(), errors='coerce')
+        if len(ai_vals) > 0:
+            high_ai = sum(ai_vals > 60)
+            if high_ai > len(ai_vals) * 0.3:
+                st.warning(f"⚠️ **AI冲击认知预警**：{high_ai}/{len(ai_vals)} ({100*high_ai//max(1,len(ai_vals))}%) 名学生将AI替代率设得过高（> 60%），可能存在「技术恐惧」偏差。建议重点复习「补偿效应」与「偏向性技术进步」概念。")
+                warning_count += 1
+            if len(ai_vals) > 0 and ai_vals.mean() < 15:
+                st.info(f"💡 **AI冲击低估提示**：班级平均AI冲击 {ai_vals.mean():.1f}%（< 15% 阈值），部分学生可能低估技术变革速度。")
+    
+    # 检查4: 乡村振兴政策开启率
+    if "乡村振兴补贴" in df.columns:
+        rural_on = sum(1 for v in df["乡村振兴补贴"] if "已开启" in str(v))
+        rural_rate = rural_on / max(1, len(df))
+        if rural_rate < 0.3:
+            st.warning(f"⚠️ **政策认知盲区**：仅有 {rural_on}/{len(df)} ({100*rural_rate:.0f}%) 的学生开启了乡村振兴补贴，低于 30% 阈值。建议补充讲解户籍制度对劳动力流动的影响及乡村振兴政策的经济学逻辑。")
+            warning_count += 1
+    
+    # 检查5: 财政政策选择率
+    if "实施政策" in df.columns:
+        policy_strs = df["实施政策"].dropna().astype(str)
+        fiscal_count = sum(1 for p in policy_strs if "财政" in p)
+        if len(policy_strs) > 0 and fiscal_count == 0:
+            st.info(f"💡 **财政政策盲区提示**：班级中无一人选择财政扩张政策。建议补充讲解：货币政策 vs 财政政策各自的适用场景——经济衰退时财政政策往往更有效（流动性陷阱）。")
+    
+    if warning_count == 0:
+        st.success("✅ 当前上传数据的各项指标均在正常阈值范围内，暂未触发预警。")
     
     st.markdown('</div>', unsafe_allow_html=True)
     
