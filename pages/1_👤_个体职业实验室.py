@@ -1,311 +1,515 @@
 """
-个体职业实验室 — 工资画像 + 流动决策 + 收入/替代效应入口
-国赛优化版：参数靠图、图表标注、真实数据基准、挑战模式、预测验证、乡村振兴
+个体职业发展实验室 — 人力资本投资与职业决策仿真
+教学竞赛级：预测-验证脚手架 + 一生收益折现 + 中国真实数据基准 + 课程思政
 """
 
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-from datetime import datetime
 import sys, os
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared import (
-    COLOR, SHARED_CSS,
-    render_page_banner, render_metric_card, render_card_header,
-    render_challenge_banner, render_predict_verify, render_policy_tag,
     calc_mincer, calc_migration_npv,
-    generate_lab_report, generate_report_download,
-    CHINA_WAGE_BY_EDU_2024, CHINA_MIGRANT_WAGE_2024, EDUCATION_LABELS, DATA_SOURCES,
+    CHINA_WAGE_BY_EDU_2024, CHINA_MIGRANT_WAGE_2024,
+    EDUCATION_LABELS, DATA_SOURCES,
+    SCHOOL_NAME, AUTHOR_NAME,
 )
 
-# ==========================================
-# 页面配置
-# ==========================================
 st.set_page_config(page_title="个体职业实验室", page_icon="👤", layout="wide")
-st.markdown(SHARED_CSS(color=COLOR["primary_light"], dark=COLOR["primary"], light=COLOR["primary_light"]), unsafe_allow_html=True)
-
-render_page_banner("👤", "个体职业发展实验室", "Micro Lab", "blue")
 
 # ==========================================
-# 侧边栏：全局控制
+# 赛博暗色 UI
 # ==========================================
-with st.sidebar:
-    st.header("⚙️ 全局设置")
-    st.caption("核心实验参数已移至图表旁，此处为辅助功能")
+st.markdown("""
+<style>
+    .stApp { background-color: #0b0f19 !important; }
+    section[data-testid="stSidebar"] {
+        background-color: #090d16 !important;
+        border-right: 1px solid rgba(59, 130, 246, 0.1) !important;
+    }
+    .stApp label, .stApp p, .stApp span,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+    .stApp li, .stApp strong, .stApp b, .stApp em, .stMarkdown {
+        color: #e2e8f0 !important;
+    }
+    .stMarkdown table th, .stMarkdown table td {
+        border-color: rgba(148, 163, 184, 0.3) !important;
+        color: #cbd5e1 !important;
+    }
+    div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
+        color: #38bdf8 !important; font-weight: 600 !important;
+    }
+    div[data-testid="stRadio"] label[data-selected="true"] {
+        color: #00f2fe !important; font-weight: 700 !important;
+    }
+    .tech-card {
+        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+        border: 1px solid rgba(59, 130, 246, 0.15) !important;
+        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
+        backdrop-filter: blur(12px);
+        border-radius: 12px; padding: 24px; margin-bottom: 24px;
+    }
+    .cyber-header {
+        font-size: 20px; font-weight: 700; color: #ffffff !important;
+        margin-bottom: 20px; display: flex; align-items: center;
+    }
+    .cyber-header::before {
+        content: ''; display: inline-block; width: 6px; height: 24px;
+        background: #3b82f6; margin-right: 12px; border-radius: 3px;
+        box-shadow: 0 0 8px #3b82f6;
+    }
+    .predict-card {
+        background: linear-gradient(135deg, rgba(30, 58, 138, 0.3) 0%, rgba(37, 99, 235, 0.1) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        border-radius: 12px; padding: 20px; margin-bottom: 18px;
+    }
+    .highlight-num {
+        font-size: 28px; font-weight: 900; color: #38bdf8;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
+    header {visibility: hidden;} #MainMenu {visibility: hidden;} footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# Banner
+# ==========================================
+st.markdown(f"""
+<div style="margin-bottom: 20px;">
+    <h1 style="color: #ffffff; font-weight: 900; margin-bottom: 5px;">👤 个体职业发展实验室</h1>
+    <h4 style="color: #38bdf8; font-weight: 600; letter-spacing: 1px;">
+        你的人生 · 你的选择 — 人力资本投资回报仿真
+    </h4>
+    <p style="color: #64748b; font-size: 14px; margin-top: 4px;">
+        {SCHOOL_NAME} · 课程负责人：{AUTHOR_NAME} | 基于明瑟收入方程 (Mincer Equation)
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 情境代入
+# ==========================================
+with st.expander("📋 你的故事（点击展开）", expanded=False):
+    st.markdown("""
+    **🎓 假设你正站在人生的十字路口——**
     
-    def _reset_micro():
-        for key in list(st.session_state.keys()):
-            if key.startswith(("edu_", "gen_", "spec_", "disc_", "wdiff_", "cmove_", "cpsych_", "rural_", "micro_")):
-                del st.session_state[key]
+    你刚高中毕业，面前有三条路：
+    - 📚 **继续读书**（本科 → 硕士 → 博士），但意味着 4~10 年没有全职收入
+    - 🏭 **直接工作**，早早开始赚钱，但起薪低、天花板有限
+    - 🏙️ **去大城市闯荡**，高薪但房租贵、压力大
     
-    st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_micro)
-    st.divider()
-    st.markdown("##### 📎 快捷入口")
-    st.page_link("pages/1b_⚖️_劳动供给决策.py", label="⚖️ 收入/替代效应分解 →", use_container_width=True)
-    st.page_link("🏠_综合门户首页.py", label="🏠 返回门户", use_container_width=True)
+    **你要做一个可能会影响你未来 40 年的决定。**
+    
+    这个实验室将用经济学模型帮你模拟「如果……会怎样？」——  
+    但不是替你选择，而是让你看见选择背后的**数字逻辑**。
+    """)
 
 # ==========================================
-# 挑战模式
+# 预测验证 - 脚手架第一步
 # ==========================================
-render_challenge_banner("micro", [
-    ("🎓", "教育投资回报最大化", "在歧视系数为0%的情况下，找到使起薪溢价最高的受教育年限组合"),
-    ("🌾", "乡村振兴返乡决策", "调整城乡工资差和心理成本，找到一个「返乡优于进城」的参数组合，并开启乡村振兴补贴观察变化"),
-])
+st.markdown("<div class='predict-card'>", unsafe_allow_html=True)
+st.markdown("##### 🔮 先预测，再实验")
+
+predict_done = "micro_pred_done" in st.session_state
+
+if not predict_done:
+    st.markdown("*在你调整任何参数之前，先做一个直觉判断：*")
+    pred_q = st.radio(
+        "**你认为：读 4 年本科（vs 高中毕业直接工作），一生的总收入会增加多少？**",
+        ["A. 不到 10%（差不多）",
+         "B. 约 20~50%（有明显提升）",
+         "C. 超过 100%（翻倍以上）",
+         "D. 不一定，还要看培训投入和歧视因素"],
+        key="micro_pred"
+    )
+    def _confirm_pred():
+        st.session_state.micro_pred_done = True
+        st.session_state.micro_pred_answer = st.session_state.micro_pred
+    st.button("✅ 这是我的直觉，开始实验！", key="micro_pred_btn", on_click=_confirm_pred)
+else:
+    user_pred = st.session_state.get("micro_pred_answer", "")
+    st.info(f"📝 你的预测：**{user_pred}** — 实验结果出来后，看看你的直觉准不准！")
+    
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 模块一：人力资本工资画像
+# 参数面板
 # ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("💎 模块一：职业生涯工资画像 (Wage-Age Profile)", color=COLOR["primary_light"], dark_color=COLOR["primary"])
+col_ctrl, col_graph = st.columns([1, 2.2])
 
-# 预测-验证
-pred_done, pred_correct, pred_answer = render_predict_verify(
-    question="增加「特殊培训投入」，你认为整条工资曲线会如何变化？",
-    options=["A. 整体向上平移", "B. 斜率变陡（前期低后期高）", "C. 没有变化"],
-    correct_answer="B. 斜率变陡（前期低后期高）",
-    var_name="micro_wp"
-)
+with col_ctrl:
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='cyber-header'>🎛️ 你的人生参数</div>", unsafe_allow_html=True)
+    
+    edu = st.slider("🎓 受教育年限", 9, 22, 16, key="edu",
+                    help=f"9=初中 | 12=高中 | 16=本科 | 19=硕士 | 22=博士")
+    edu_label = EDUCATION_LABELS.get(edu, f"{edu}年")
+    st.caption(f"当前：**{edu_label}**")
+    
+    exp_peak = st.slider("📈 职业生涯观察年限", 5, 40, 40, 5, key="exp",
+                         help="你想看未来多少年的收入曲线？")
+    
+    st.markdown("---")
+    st.markdown("**🏋️ 培训投资类型**")
+    train_type = st.radio("", ["无额外培训", "一般培训 (通用技能)", "特殊培训 (企业专属技能)"],
+                          key="train", horizontal=False,
+                          help="一般培训→工资曲线整体上移 | 特殊培训→前期低、后期陡")
+    
+    gen_t = 5 if "一般" in train_type else 0
+    spec_t = 3 if "特殊" in train_type else 0
+    
+    st.markdown("---")
+    st.markdown("**🏙️ 城市迁移决策**")
+    migrate = st.checkbox("考虑迁移至一二线城市？", key="migrate",
+                          help="高薪但高成本，值得吗？")
+    
+    if migrate:
+        w_diff = st.slider("城市月薪优势 (k)", 2, 30, 10, key="wdiff")
+        c_move = st.slider("一次性搬迁成本 (k)", 5, 80, 25, key="cmove")
+        c_psych = st.slider("年度心理成本 (k)", 0, 30, 8, key="cpsych")
+    else:
+        w_diff, c_move, c_psych = 0, 0, 0
+    
+    st.markdown("---")
+    st.markdown("**⚖️ 市场环境**")
+    disc = st.slider("劳动力市场歧视 (%)", 0, 40, 10, key="disc",
+                     help="非生产率因素（性别/户籍等）导致的工资折损")
+    
+    st.markdown("---")
+    st.caption("📊 快捷预设")
+    col_a, col_b, col_c = st.columns(3)
+    with col_a:
+        def _preset_phd(): st.session_state.edu = 22; st.session_state.train = "无额外培训"
+        st.button("🎓 博士", key="phd", on_click=_preset_phd, use_container_width=True)
+    with col_b:
+        def _preset_master(): st.session_state.edu = 19; st.session_state.train = "一般培训 (通用技能)"
+        st.button("📚 硕士", key="master", on_click=_preset_master, use_container_width=True)
+    with col_c:
+        def _preset_worker(): st.session_state.edu = 12; st.session_state.migrate = True
+        st.button("🏭 打工", key="worker", on_click=_preset_worker, use_container_width=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# 实验参数（在图表旁）
-st.markdown("**📌 调节实验参数**")
-c_edu, c_gen, c_spec, c_disc = st.columns(4)
-with c_edu:
-    edu = st.slider("受教育年限", 9, 22, 16, help="9=初中, 12=高中, 16=本科, 19=硕士, 22=博士", key="edu_main")
-with c_gen:
-    gen_t = st.slider("一般培训投入", 0, 10, 5, help="可迁移技能（如沟通、管理）", key="gen_main")
-with c_spec:
-    spec_t = st.slider("特殊培训投入", 0, 10, 3, help="企业专属技能，前期降低工资曲线", key="spec_main")
-with c_disc:
-    disc = st.slider("市场歧视程度 (%)", 0, 40, 15, help="非生产率因素的工资减损", key="disc_main")
-
-# 计算
-exp_vec = np.linspace(0, 40, 100)
-w_base, _ = calc_mincer(12, exp_vec, 0, 0, 0)
+# ==========================================
+# 核心计算
+# ==========================================
+exp_vec = np.linspace(0, exp_peak, 120)
 w_exp, w_disc = calc_mincer(edu, exp_vec, gen_t, spec_t, disc)
+w_base, _ = calc_mincer(12, exp_vec, 0, 0, 0)  # 高中对照组
 
 # 真实数据基准
 real_wage = CHINA_WAGE_BY_EDU_2024.get(edu)
-edu_label = EDUCATION_LABELS.get(edu, f"{edu}年")
+edu_label_full = EDUCATION_LABELS.get(edu, f"{edu}年")
 
-col_chart, col_metrics = st.columns([3, 1])
+# 迁移 NPV
+migrate_years, migrate_npv = None, None
+if migrate and w_diff > 0:
+    migrate_years, migrate_npv = calc_migration_npv(5, 5 + w_diff, c_move, c_psych)
 
-with col_chart:
-    fig1 = go.Figure()
-    
-    # 对照组
+# 一生累计收入（简化）
+lifetime_edu = np.trapz(w_exp, exp_vec)
+lifetime_base = np.trapz(w_base, exp_vec)
+premium = (lifetime_edu / lifetime_base - 1) * 100
+
+# ==========================================
+# Plotly 可视化
+# ==========================================
+fig1 = go.Figure()
+
+# 对照组（高中）
+fig1.add_trace(go.Scatter(
+    x=exp_vec, y=w_base, name="对照组 (高中毕业)",
+    line=dict(color='rgba(148, 163, 184, 0.5)', width=2, dash='dot'),
+    hovertemplate='工龄: %{x:.0f}年<br>工资: %{y:.1f}<br>高中对照组<extra></extra>'
+))
+
+# 实验组
+fig1.add_trace(go.Scatter(
+    x=exp_vec, y=w_exp, name=f'你的选择 ({edu_label})',
+    line=dict(color='#3b82f6', width=4),
+    fill='tonexty', fillcolor='rgba(59, 130, 246, 0.08)',
+    hovertemplate=(
+        f'<b>工龄: %{{x:.0f}}年</b><br>'
+        f'工资: %{{y:.1f}}<br>'
+        f'💡 教育投资提升了整条曲线<br>'
+        f'<extra></extra>'
+    )
+))
+
+# 歧视后工资
+if disc > 0:
     fig1.add_trace(go.Scatter(
-        x=exp_vec, y=w_base, name='对照组 (高中)',
-        line=dict(color='#cbd5e1', dash='dash', width=2),
-        hovertemplate='工龄: %{x}年<br>工资: %{y:.1f}<br>对照组 (高中)<extra></extra>'
+        x=exp_vec, y=w_disc, name=f'歧视影响 (-{disc}%)',
+        line=dict(color='#ef4444', width=2, dash='dot'),
+        hovertemplate='工龄: %{x:.0f}年<br>歧视后工资: %{y:.1f}<extra></extra>'
     ))
-    
-    # 实验组
+    # 歧视损失面积
     fig1.add_trace(go.Scatter(
-        x=exp_vec, y=w_exp, name=f'实验组 ({edu_label})',
-        line=dict(color=COLOR["primary_light"], width=4),
-        mode='lines',
-        hovertemplate='工龄: %{x}年<br>工资: %{y:.1f}<br>💡 教育投资提升了整条工资曲线<br>实验组 ({edu_label})<extra></extra>'
+        x=np.concatenate([exp_vec, exp_vec[::-1]]),
+        y=np.concatenate([w_disc, w_exp[::-1]]),
+        fill='toself', fillcolor='rgba(239, 68, 68, 0.08)',
+        line=dict(width=0), hoverinfo='skip', name='歧视损失'
     ))
+
+# 盈亏平衡标注：教育组追上高中组总收入的位置
+cum_edu = np.cumsum(w_exp)
+cum_base = np.cumsum(w_base)
+diff_cum = cum_edu - cum_base
+breakeven_idx = None
+for i, d in enumerate(diff_cum):
+    if d > 0 and (i == 0 or diff_cum[i-1] <= 0):
+        breakeven_idx = i
+        break
+if breakeven_idx and diff_cum[-1] > 0:
+    fig1.add_vline(
+        x=exp_vec[breakeven_idx], line_dash="dash", line_color="#10b981",
+        annotation_text=f"盈亏平衡 ≈{exp_vec[breakeven_idx]:.0f}年",
+        annotation_font=dict(color="#10b981", size=12),
+        annotation_position="top"
+    )
+    fig1.add_trace(go.Scatter(
+        x=[exp_vec[breakeven_idx]], y=[w_exp[breakeven_idx]],
+        mode='markers', name='📌 回本点',
+        marker=dict(size=14, color='#10b981', symbol='star', line=dict(width=2, color='white')),
+        hovertemplate=f'<b>盈亏平衡点</b><br>此时教育投资累计收益 = 累计成本<br>工龄 ≈{exp_vec[breakeven_idx]:.0f}年<extra></extra>'
+    ))
+
+# 真实数据基准线
+if real_wage:
+    fig1.add_hline(
+        y=real_wage, line_dash="dash", line_color="#fbbf24",
+        annotation_text=f"🇨🇳 2024年{edu_label_full}实际均值 ≈{real_wage}元/月",
+        annotation_position="bottom right",
+        annotation_font=dict(size=11, color="#fbbf24")
+    )
+
+fig1.update_layout(
+    xaxis_title="工龄 (年)", yaxis_title="月工资指数",
+    xaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
+    yaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
+    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="#e2e8f0", size=13),
+    height=420, margin=dict(l=40, r=20, t=30, b=40),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
+                font=dict(color="#e2e8f0")),
+    hovermode='x unified'
+)
+
+with col_graph:
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
     
-    # 歧视后工资
+    tab1, tab2 = st.tabs(["📈 工资曲线", "🏙️ 迁移分析"])
+    
+    with tab1:
+        st.plotly_chart(fig1, use_container_width=True)
+        if real_wage:
+            st.caption(f"📊 {DATA_SOURCES['wage_2024']}")
+    
+    with tab2:
+        if migrate and migrate_npv is not None:
+            fig2 = go.Figure()
+            colors_m = ['#ef4444' if v < 0 else '#10b981' for v in migrate_npv]
+            fig2.add_trace(go.Bar(
+                x=migrate_years, y=migrate_npv, marker_color=colors_m,
+                hovertemplate='第%{x}年<br>累计NPV: %{y:.1f}k<extra></extra>',
+                name='累计净收益'
+            ))
+            fig2.update_layout(
+                xaxis_title="年份", yaxis_title="累计净收益 (k)",
+                xaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
+                yaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font=dict(color="#e2e8f0", size=13),
+                height=380, margin=dict(l=40, r=20, t=10, b=40),
+                legend=dict(font=dict(color="#e2e8f0"))
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+            st.caption(f"📊 {DATA_SOURCES['migrant']}：农民工月均收入 {CHINA_MIGRANT_WAGE_2024} 元")
+            
+            be_arr = np.where(migrate_npv > 0)[0]
+            if len(be_arr) > 0:
+                st.success(f"✅ **值得迁移** — 在第 **{be_arr[0]+1}** 年收回成本，累计净收益 **{migrate_npv[-1]:+.0f}k**")
+            else:
+                st.error(f"❌ **不建议迁移** — 成本过高，{len(migrate_years)} 年内无法回本")
+        else:
+            st.info("🏠 **你选择了留在家乡**。开启上方「城市迁移决策」开关，探索外出闯荡的收益与代价。")
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 关键指标面板
+# ==========================================
+st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+st.markdown("<div class='cyber-header'>📊 你的决策数据面板</div>", unsafe_allow_html=True)
+
+c1, c2, c3, c4 = st.columns(4)
+
+with c1:
+    delta_color = "normal" if premium > 0 else "inverse"
+    st.metric("一生总收入提升", f"{premium:+.1f}%",
+              delta=f"vs 高中毕业", delta_color=delta_color)
+
+with c2:
     if disc > 0:
-        fig1.add_trace(go.Scatter(
-            x=exp_vec, y=w_disc, name=f'歧视后 ({disc}%)',
-            line=dict(color=COLOR["danger"], width=2, dash='dot'),
-            hovertemplate='工龄: %{x}年<br>工资: %{y:.1f}<br>⚠️ 歧视导致工资下降{disc}%<extra></extra>'
-        ))
-        # 填充歧视损失区域
-        fig1.add_trace(go.Scatter(
-            x=np.concatenate([exp_vec, exp_vec[::-1]]),
-            y=np.concatenate([w_disc, w_exp[::-1]]),
-            fill='toself', fillcolor='rgba(239, 68, 68, 0.08)',
-            line=dict(width=0), hoverinfo='skip', name='歧视损失'
-        ))
-    
-    # 峰值标注
-    peak_idx = np.argmax(w_exp)
-    fig1.add_trace(go.Scatter(
-        x=[exp_vec[peak_idx]], y=[w_exp[peak_idx]],
-        mode='markers', name='职业巅峰',
-        marker=dict(size=14, color=COLOR["warning"], symbol='star', line=dict(width=2, color='white')),
-        hovertemplate=f'🌟 职业巅峰<br>工龄: {exp_vec[peak_idx]:.0f}年<br>工资: {w_exp[peak_idx]:.1f}<br>💡 此时经验回报达到最高<extra></extra>'
-    ))
-    
-    # 真实数据基准线
+        st.metric("歧视导致的损失", f"-{disc}%",
+                  delta=f"工资被压低", delta_color="inverse")
+    else:
+        st.metric("市场公平度", "无歧视", delta="✅")
+
+with c3:
     if real_wage:
-        fig1.add_hline(
-            y=real_wage, line_dash="dash", line_color=COLOR["success"],
-            annotation_text=f"2024年{edu_label}实际平均月薪 ≈{real_wage}元",
-            annotation_position="bottom right",
-            annotation_font=dict(size=11, color=COLOR["success"])
+        dev = (w_exp[0] / real_wage - 1) * 100
+        dev_color = "normal" if dev < 0 else "inverse"
+        st.metric("vs 中国实际基准", f"{dev:+.1f}%",
+                  delta=f"{edu_label_full}实际均值{real_wage}元", delta_color=dev_color)
+    else:
+        st.metric("数据基准", "无对应数据", delta="—")
+
+with c4:
+    if breakeven_idx:
+        st.metric("投资回本年限", f"≈{exp_vec[breakeven_idx]:.0f}年",
+                  delta=f"之后全是净收益")
+    else:
+        st.metric("回本评估", "未达回本点", delta="教育投入过大？")
+
+st.markdown("</div>", unsafe_allow_html=True)
+
+# ==========================================
+# AI 诊断报告
+# ==========================================
+st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+st.markdown("<div class='cyber-header'>💡 你的职业决策诊断</div>", unsafe_allow_html=True)
+
+col_d1, col_d2 = st.columns([3, 2])
+
+with col_d1:
+    # 构建诊断文案
+    diagnosis_parts = []
+    
+    # 教育投资诊断
+    if premium > 80:
+        diagnosis_parts.append(
+            f"🎓 **教育回报极高**：选择 **{edu_label_full}** 使你的预期终身收入提升 **{premium:.0f}%**。"
+            f"这是一个非常显著的人力资本溢价，说明在当前劳动力市场中，你的学历信号价值很高。"
+        )
+    elif premium > 30:
+        diagnosis_parts.append(
+            f"📚 **教育回报可观**：选择 **{edu_label_full}** 带来 **{premium:.0f}%** 的终身收入提升。"
+            f"投资的回报是正向的，但要关注回本年限。"
+        )
+    else:
+        diagnosis_parts.append(
+            f"⚠️ **教育回报有限**：{edu_label_full} 仅带来 {premium:.0f}% 的提升。"
+            f"可能是教育年限过长（机会成本太高），或者培训投资不足。"
         )
     
-    fig1.update_layout(
-        xaxis_title="工龄 (Year)", yaxis_title="工资指数",
-        template="plotly_white", height=400,
-        margin=dict(l=20, r=20, t=10, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig1, use_container_width=True)
+    # 培训诊断
+    if "一般" in train_type:
+        diagnosis_parts.append(
+            "🏋️ **一般培训**已在你的工资曲线中生效——可迁移技能使整条曲线向上平移，"
+            "无论你跳槽到哪家公司，这个溢价都会跟着你。"
+        )
+    elif "特殊" in train_type:
+        diagnosis_parts.append(
+            "🔧 **特殊培训**让你前期工资较低（你在'交学费'），但后期曲线更陡——"
+            "前提是你不能离开这家公司，否则专业技能会贬值。"
+        )
     
-    # 数据来源说明
-    st.caption(DATA_SOURCES["wage_2024"])
-
-with col_metrics:
-    st.markdown("##### 📊 关键指标")
-    render_metric_card("起薪预测", f"{w_exp[0]:.1f}", "neutral")
+    # 迁移诊断
+    if migrate and migrate_npv is not None:
+        be_arr = np.where(migrate_npv > 0)[0]
+        if len(be_arr) > 0:
+            diagnosis_parts.append(
+                f"🏙️ **城市迁移是理性的**：在考虑了搬迁成本 ({c_move}k) 和心理成本 ({c_psych}k/年) 后，"
+                f"你将在第 **{be_arr[0]+1}** 年实现净收益。"
+            )
+        else:
+            diagnosis_parts.append(
+                f"🏠 **留在家乡更明智**：虽然城市工资高出 {w_diff}k/月，"
+                f"但高昂的搬迁和心理成本让你的 NPV 始终为负。"
+            )
     
-    premium = ((w_exp[20] / w_base[20]) - 1) * 100
-    p_color = "positive" if premium > 0 else "negative"
-    render_metric_card("教育溢价 (中期)", f"+{premium:.1f}%", p_color)
+    # 歧视诊断
+    if disc > 15:
+        diagnosis_parts.append(
+            f"🚨 **市场存在显著歧视**（{disc}%），你的实际工资被非生产率因素压低。"
+            f"这意味着即使相同的人力资本，你也面临不公平竞争——这不是你的问题，是市场的问题。"
+        )
     
-    if disc > 0:
-        render_metric_card("歧视损失", f"-{disc}%", "negative")
-    
+    # 真实数据对比
     if real_wage:
-        diff_pct = ((w_exp[0] / real_wage) - 1) * 100
-        d_color = "positive" if diff_pct > 0 else "negative"
-        render_metric_card(f"vs 中国{edu_label}基准", f"{diff_pct:+.1f}%", d_color)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 模块二：劳动力流动
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("🚀 模块二：劳动力流动回报分析 (Migration NPV)", color=COLOR["primary_light"], dark_color=COLOR["primary"])
-
-st.markdown("**📌 调节流动参数**")
-c_wd, c_mv, c_ps, c_rural = st.columns(4)
-with c_wd:
-    w_diff = st.slider("城乡月薪差 (k)", 1, 30, 8, key="wdiff_main")
-with c_mv:
-    c_move = st.number_input("搬迁成本 (k)", 0, 100, 20, key="cmove_main")
-with c_ps:
-    c_psych = st.slider("心理成本 (k/年)", 0, 50, 10, key="cpsych_main")
-with c_rural:
-    rural_policy = st.checkbox("🌾 乡村振兴补贴", value=False, key="rural_main",
-                               help="假设政府实施返乡创业补贴，每年降低心理成本5k")
-
-# 乡村振兴政策效果
-if rural_policy:
-    render_policy_tag("🏡 国家乡村振兴战略 · 返乡创业补贴生效：心理成本每年降低5000元", "green")
-    c_psych_eff = max(0, c_psych - 5)
-else:
-    c_psych_eff = c_psych
-
-# 计算
-years, npv = calc_migration_npv(5, 5 + w_diff, c_move, c_psych_eff)
-breakeven = np.where(npv > 0)[0]
-
-col_npv, col_npv_info = st.columns([3, 1])
-
-with col_npv:
-    colors_npv = [COLOR["danger"] if v < 0 else COLOR["success"] for v in npv]
-    fig2 = go.Figure(go.Bar(
-        x=years, y=npv, marker_color=colors_npv,
-        hovertemplate='第%{x}年<br>累计NPV: %{y:.1f}k<extra></extra>',
-        name='累计净收益'
-    ))
-    fig2.update_layout(
-        xaxis_title="年份", yaxis_title="累计净收益 (k)",
-        template="plotly_white", height=350,
-        margin=dict(l=20, r=20, t=10, b=20)
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+        dev = (w_exp[0] / real_wage - 1) * 100
+        if abs(dev) > 20:
+            diagnosis_parts.append(
+                f"📊 **模型与现实偏离较大**：你的仿真起薪与 **{edu_label_full}** 中国实际均值偏差 **{dev:+.0f}%**。"
+                f"这可能是因为：模型未考虑行业差异、地域差异、学校层级、或非货币收益（如编制、福利）。"
+                f"这也正是明瑟方程的局限性——真实世界远比模型复杂。"
+            )
     
-    st.caption(f"基准线 — {DATA_SOURCES['migrant']}：2024年农民工月均收入 {CHINA_MIGRANT_WAGE_2024} 元")
+    for part in diagnosis_parts:
+        st.markdown(part)
+        st.markdown("")
 
-with col_npv_info:
-    st.markdown("##### 💡 决策建议")
-    if len(breakeven) > 0:
-        st.success(f"✅ **值得迁移**\n\n预计在第 **{breakeven[0]+1}** 年收回成本并开始盈利。")
-        final_npv = npv[-1]
-        render_metric_card("最终累计NPV", f"{final_npv:+.0f}k", "positive" if final_npv > 0 else "negative")
+with col_d2:
+    st.markdown("##### 🔮 你的预测 vs 现实")
+    if predict_done:
+        user_pred = st.session_state.get("micro_pred_answer", "")
+        # 简单判断
+        if premium > 100:
+            truth = "C. 超过 100%（翻倍以上）"
+        elif premium > 20:
+            truth = "B. 约 20~50%（有明显提升）"
+        elif premium > 5:
+            truth = "A. 不到 10%（差不多）"
+        else:
+            truth = "A. 不到 10%（差不多）"
+        
+        # 如果考虑了培训/歧视，应该是D
+        if disc > 10 or "特殊" in train_type:
+            truth += "（真正答案更接近 D——还要看培训和歧视）"
+        
+        if "D" in user_pred or user_pred[0] == truth[0]:
+            st.success(f"✅ **你的直觉很准！**\n\n预测：{user_pred}\n实际：教育溢价 {premium:.0f}%")
+        else:
+            st.warning(f"🤔 **有意思的偏差！**\n\n预测：{user_pred}\n实际：教育溢价 {premium:.0f}%\n\n这说明直觉和模型之间存在差距——这正是经济学要教你的。")
     else:
-        st.error("❌ **不值得迁移**\n\n心理/搬迁成本过高，长期收益无法覆盖成本。")
-        render_metric_card("最终累计NPV", f"{npv[-1]:+.0f}k", "negative")
+        st.info("🔮 回到顶部先做预测，这里会显示你的预测 vs 实际的对比")
     
-    if rural_policy:
-        # 对比无政策情况
-        _, npv_no_policy = calc_migration_npv(5, 5 + w_diff, c_move, c_psych)
-        delta = npv[-1] - npv_no_policy[-1]
-        render_metric_card("乡村振兴政策增益", f"+{delta:.0f}k", "positive")
-        st.caption("🏡 政策使返乡/留守本地更具吸引力")
+    st.markdown("---")
+    st.markdown("##### 📋 你的参数速览")
+    st.markdown(f"""
+    - 学历：{edu_label_full} ({edu} 年)
+    - 培训：{train_type}
+    - 歧视：{disc}%
+    - 迁移：{"是" if migrate else "否"}
+    """)
 
-# 乡村振兴政策解释
-if rural_policy:
-    st.markdown("""
-    <div style="background:#ecfdf5; border:1px solid #10b981; border-radius:8px; padding:12px; margin-top:10px;">
-    <strong>🏡 课程思政 · 乡村振兴</strong><br>
-    <span style="font-size:14px;">国家乡村振兴战略通过财政补贴、创业扶持、基础设施改善等政策工具，
-    有效降低了劳动力流动的心理成本和实际成本，为县域经济发展留住了人才。
-    本次模拟显示，补贴使心理成本降低，让"留下来"成为更理性的经济决策。</span>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 实验报告
+# 课程思政
 # ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📝 实验报告生成", color=COLOR["primary_light"], dark_color=COLOR["primary"])
+st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+st.markdown("<div class='cyber-header'>🏛️ 深度思考：人力资本投资的社会意义</div>", unsafe_allow_html=True)
 
-params = {
-    "受教育年限": f"{edu} 年 ({edu_label})",
-    "一般培训": f"{gen_t}",
-    "特殊培训": f"{spec_t}",
-    "歧视系数": f"{disc}%",
-    "城乡月薪差": f"{w_diff}k",
-    "搬迁成本": f"{c_move}k",
-    "心理成本": f"{c_psych_eff}k",
-    "乡村振兴补贴": "已开启" if rural_policy else "未开启",
-}
+st.markdown("""
+**1. 个体职业韧性 (Career Resilience)**
+> 你今天的教育投资，不仅是未来工资条上的数字变化，更是你面对技术变革时的「抗风险能力」。
+> 当 AI 替代低技能岗位时，受过高等教育、拥有可迁移技能的劳动者，
+> 有更强的能力转型、适应、甚至创造新的岗位——这正是**职业韧性**的核心。
 
-baseline_comparison = []
-if real_wage:
-    baseline_comparison.append({
-        "label": "起薪",
-        "experiment": f"{w_exp[0]:.1f}",
-        "baseline": f"{real_wage} 元",
-        "diff": f"{((w_exp[0] / real_wage) - 1) * 100:+.1f}%"
-    })
-baseline_comparison.append({
-    "label": "教育溢价",
-    "experiment": f"+{premium:.1f}%",
-    "baseline": "约+10%~30%（中国实际）",
-    "diff": "—"
-})
+**2. 乡村振兴的人才命题**
+> 如果每个受过高等教育的人都涌入大城市，县城的产业谁来支撑？
+> 乡村振兴不仅是修路盖房，更是**人才的回流与在地化**。
+> 当你的迁移 NPV 为负时，也许那不是失败——而是家乡的发展潜力正在追赶城市。
+> 一个经济学视角之外的问题是：你想成为「逃离家乡的赢家」，还是「改变家乡的建设者」？
 
-analysis_text = f"""
-### 1. 人力资本回报
-根据明瑟收入方程模拟，当前教育投入下，职业中期教育溢价为 **{premium:.1f}%**。
-{f'市场存在 {disc}% 的歧视系数，导致显著的非生产率工资差异。' if disc > 0 else '市场环境公平，无显著歧视损失。'}
-与2024年中国{edu_label}实际平均工资（≈{real_wage}元）相比，模型预测起薪{'偏高' if premium > 0 else '偏低'}。
+**3. 超越明瑟方程**
+> 明瑟方程衡量的只是**可货币化的工资回报**，但教育的价值远不止于此——
+> 认知边界的拓展、社交网络的质量、对下一代的文化传递……
+> 这些「非货币收益」无法用模型计算，但它们可能才是教育最深的红利。
+""")
 
-### 2. 劳动力流动决策
-基于NPV模型，{f'迁移是理性选择，预计第{breakeven[0]+1}年盈亏平衡。' if len(breakeven) > 0 else '迁移非理性，成本无法覆盖收益。'}
-{f'乡村振兴补贴政策生效后，留守本地的经济吸引力显著提升。' if rural_policy else ''}
-"""
-
-results_pack = {
-    "analysis": analysis_text,
-    "baseline_comparison": baseline_comparison,
-    "reflection_questions": """
-1. 当歧视系数从0增加到30%时，教育投资回报率如何变化？这对教育政策有何启示？
-2. 为什么乡村振兴补贴降低心理成本后，原本不值得迁移的情况可能变成"返乡创业"优于"外出打工"？
-3. 请对比一般培训与特殊培训对工资曲线的不同影响，并解释为什么企业不愿意为一般培训付费。
-""",
-    "ideology_text": f"""
-{'乡村振兴战略通过降低劳动力流动成本，有效促进了城乡均衡发展。'
- '本次实验模拟了补贴政策对劳动者流动决策的影响，体现了国家政策在优化劳动力资源配置中的关键作用。'
- if rural_policy else '本次实验未开启乡村振兴政策选项。建议在后续实验中尝试开启，观察国家政策对个体职业决策的引导作用。'}""",
-    "conclusion": f"验证了教育投资的边际递减规律、歧视的市场扭曲效应，{'以及乡村振兴政策对劳动力流动的积极引导作用。' if rural_policy else '以及心理成本对劳动力流动的阻碍作用。'}"
-}
-
-report_text = generate_lab_report("micro", params, results_pack)
-generate_report_download(report_text, "Micro_Lab")
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
