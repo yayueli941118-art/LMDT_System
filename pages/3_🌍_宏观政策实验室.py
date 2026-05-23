@@ -55,6 +55,19 @@ render_challenge_banner("macro", [
     ("🌐", "新质生产力战略", "设置技能错配度为1.5，然后开启「技能重塑补贴」。观察曲线回移幅度，理解新质生产力战略的核心逻辑"),
 ])
 
+# 挑战模式约束
+if "macro_attempts" not in st.session_state:
+    st.session_state.macro_attempts = 3
+    st.session_state.macro_budget = 100
+
+with st.expander("🎯 挑战规则（先读！）", expanded=True):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.metric("剩余尝试次数", st.session_state.macro_attempts)
+    with c2:
+        st.metric("剩余财政预算", f"{st.session_state.macro_budget} 亿")
+    st.caption("💡 每次提交政策消耗1次尝试 + 对应预算。3次用完后以最后一次提交的结果作为最终成绩。")
+
 # ==========================================
 # 预测验证
 # ==========================================
@@ -280,3 +293,23 @@ results_pack = {
 report_text = generate_lab_report("macro", params, results_pack)
 generate_report_download(report_text, "Macro_Lab")
 st.markdown('</div>', unsafe_allow_html=True)
+
+# 参数校准说明
+with st.expander("📐 底层参数校准说明 (Methodology)", expanded=False):
+    st.markdown("""
+### 贝弗里奇曲线参数校准
+
+| 参数 | 校准依据 | 来源 |
+|------|---------|------|
+| 匹配效率 μ 基准值 (0.5) | 中国劳动力市场匹配效率估计 | Pissarides (2000) "Equilibrium Unemployment Theory" 匹配函数框架 |
+| 贝弗里奇曲线曲率 | v = μ²/u，Cobb-Douglas 匹配函数 M = μ·U<sup>0.5</sup>V<sup>0.5</sup> | Petrongolo & Pissarides (2001) JEL Survey |
+| 自然失业率 (≈5%) | 中国城镇调查失业率长期均值 | 国家统计局 (2024) |
+| AI 替代冲击默认 30% | 各行业 AI 暴露度加权平均 | Felten et al. (2023) "Occupational Exposure to AI" + 麦肯锡全球研究院 |
+| 技能错配指数 0.4 | 制造业技能缺口估计 | 人社部《制造业人才发展规划指南》 |
+
+### 学术参考
+- Pissarides, C. (2000). *Equilibrium Unemployment Theory*. MIT Press.
+- Petrongolo, B. & Pissarides, C. (2001). "Looking into the Black Box: A Survey of the Matching Function." *JEL*.
+- Felten, E., Raj, M. & Seamans, R. (2023). "Occupational Heterogeneity in Exposure to Generative AI."
+- 国家统计局 (2024). 《中国统计年鉴》.
+    """)

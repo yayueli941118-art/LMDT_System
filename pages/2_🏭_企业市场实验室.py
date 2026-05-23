@@ -50,6 +50,18 @@ render_challenge_banner("market", [
     ("💰", "效率工资之谜", "为什么企业愿意支付高于市场出清的工资？调整薪酬模式为「效率工资」，解释其理论逻辑"),
 ])
 
+# 挑战模式约束
+if "market_attempts" not in st.session_state:
+    st.session_state.market_attempts = 3
+    st.session_state.market_budget = 100
+
+with st.expander("🎯 挑战规则", expanded=True):
+    c1, c2 = st.columns(2)
+    with c1:
+        st.metric("剩余尝试次数", st.session_state.market_attempts)
+    with c2:
+        st.metric("剩余运营预算", f"{st.session_state.market_budget} 亿")
+
 # ==========================================
 # 模块一：派生需求
 # ==========================================
@@ -221,3 +233,21 @@ results_pack = {
 report_text = generate_lab_report("market", params, results_pack)
 generate_report_download(report_text, "Market_Lab")
 st.markdown('</div>', unsafe_allow_html=True)
+
+with st.expander("📐 底层参数校准说明 (Methodology)", expanded=False):
+    st.markdown("""
+### CES 生产函数与要素配置参数校准
+
+| 参数 | 校准依据 | 来源 |
+|------|---------|------|
+| CES 替代弹性 σ (默认 0.8) | 中国制造业资本-劳动替代弹性实证估计 | 陈诗一 (2011) 《经济研究》；白重恩等 (2008) |
+| Cobb-Douglas α (默认 0.3) | 资本收入份额 ≈ 30% | 中国投入产出表 + 国民经济核算 |
+| 稳岗补贴降幅 30% | 疫情期间社保减免幅度（企业端实际成本降幅） | 人社部发〔2020〕11号 + 各地实施细则 |
+| 机器人年租金 20 万 | 工业机器人全生命周期年化成本（含维护） | IFR《世界机器人报告 2024》 |
+
+### 学术参考
+- 陈诗一 (2011). "中国工业分行业统计数据估算: 1980-2008." 《经济学(季刊)》.
+- 白重恩, 钱震杰, 武康平 (2008). "中国工业部门要素分配份额决定因素研究." 《经济研究》.
+- Klump, R., McAdam, P. & Willman, A. (2007). "Factor Substitution and Factor-Augmenting Technical Progress in the US." *REStat*.
+- IFR (2024). *World Robotics Report*.
+    """)
