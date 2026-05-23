@@ -60,7 +60,7 @@ render_card_header("🎛️ 实验参数设置", color="#8b5cf6", dark_color="#4
 
 col1, col2, col3, col4 = st.columns(4)
 with col1:
-    wage_initial = st.slider("初始工资率 (元/小时)", 10, 60, 25, key="wage_init")
+    wage_initial = st.slider("初始工资率 (元/小时)", 10, 100, 25, key="wage_init")
 with col2:
     wage_new = st.slider("新工资率 (元/小时)", 15, 100, 45, key="wage_new_slider")
 with col3:
