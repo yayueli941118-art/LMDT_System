@@ -200,6 +200,7 @@ with col_ctrl:
     st.page_link("pages/1c_✈️_迁移决策仿真.py", label="✈️ 深度迁移决策仿真 →", use_container_width=True)
     st.page_link("pages/1b_⚖️_劳动供给决策.py", label="⚖️ 收入/替代效应分解 →", use_container_width=True)
     st.page_link("pages/1d_🚫_歧视经济学实验.py", label="🚫 劳动力市场歧视实验 →", use_container_width=True)
+    st.page_link("pages/1e_💰_工资决定与收入差距.py", label="💰 工资决定与收入差距 →", use_container_width=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
