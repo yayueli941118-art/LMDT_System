@@ -318,7 +318,7 @@ fig.update_layout(
     font=dict(color="#e2e8f0", size=13),
     height=550,
     margin=dict(l=40, r=20, t=40, b=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
     hovermode='closest'
 )
 

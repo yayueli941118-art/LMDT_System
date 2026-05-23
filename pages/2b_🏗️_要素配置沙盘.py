@@ -80,7 +80,7 @@ with st.expander("📋 场景背景（点击展开）", expanded=False):
     - 🤖 **资本 K**：工业机器人 / AI 质检系统（每台年租金 r）
     - 👷 **劳动 L**：传统产业工人（每人年薪 w）
     
-    技术约束：产线遵循 **Cobb-Douglas 生产函数** `Q = K^α × L^(1-α)`
+    技术约束：产线遵循 **Cobb-Douglas 生产函数** $Q = K^{\alpha} \times L^{(1-\alpha)}$
     
     你将面对一个关键决策：当地政府出台了**稳岗补贴政策**（工人工资 w 下降 30%），
     这会对你的要素配置产生什么影响？背后有两股力量在博弈——
@@ -345,7 +345,7 @@ fig.update_layout(
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
     font=dict(color="#e2e8f0", size=13),
     height=550, margin=dict(l=40, r=20, t=40, b=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
     hovermode='closest'
 )
 
