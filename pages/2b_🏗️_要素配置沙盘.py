@@ -94,6 +94,9 @@ with st.expander("📋 场景背景（点击展开）", expanded=False):
 # ==========================================
 # 参数控制台
 # ==========================================
+# ==========================================
+# 3. 参数控制台 + 进度滑块
+# ==========================================
 col_ctrl, col_graph = st.columns([1, 2.5])
 
 with col_ctrl:
@@ -109,234 +112,208 @@ with col_ctrl:
     w_drop = st.slider("稳岗补贴导致工资降幅 (%)", 5, 60, 30, 5, key="w_drop",
                        help="地方政府稳岗补贴使企业实际工资成本下降")
     
-    w1 = w0 * (1 - w_drop / 100)  # 补贴后实际工资
+    w1 = w0 * (1 - w_drop / 100)
     
     st.markdown("<hr style='border-color: rgba(16, 185, 129, 0.2);'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>👣 探究进度控制</div>", unsafe_allow_html=True)
+    st.markdown("<div class='cyber-header'>🎚️ 补贴生效进度</div>", unsafe_allow_html=True)
     
-    step = st.radio(
-        "选择观测阶段：",
-        ["1. 初始规划 (均衡点 A)",
-         "2. 替代效应剥离 (点 A → B)",
-         "3. 规模效应爆发 (点 B → C)"],
-        key="step"
-    )
+    progress = st.slider("拖动滑块，亲手推演要素重组 👇", 0, 100, 0, 1, key="progress",
+                         help="0% = 初始规划 → 100% = 稳岗补贴完全生效")
+    
+    if progress < 5:
+        st.info("📍 **初始规划** — 补贴尚未生效")
+    elif progress < 50:
+        st.warning(f"⚡ **替代效应区** — 工资下降 {progress:.0f}%，人比机器划算了！")
+    else:
+        st.success(f"📈 **规模效应区** — 成本大幅下降，CEO 拍板扩产！")
     
     st.markdown("<hr style='border-color: rgba(16, 185, 129, 0.2);'>", unsafe_allow_html=True)
     st.caption("📊 快捷情景")
     col_a, col_b = st.columns(2)
     with col_a:
         def _preset_robot():
-            st.session_state.w0 = 8
-            st.session_state.r = 30
-            st.session_state.alpha = 0.5
-            st.session_state.w_drop = 30
+            st.session_state.w0 = 8; st.session_state.r = 30
+            st.session_state.alpha = 0.5; st.session_state.w_drop = 30
         st.button("🤖 机器人主导", use_container_width=True, key="preset_robot", on_click=_preset_robot)
     with col_b:
         def _preset_labor():
-            st.session_state.w0 = 20
-            st.session_state.r = 10
-            st.session_state.alpha = 0.2
-            st.session_state.w_drop = 40
+            st.session_state.w0 = 20; st.session_state.r = 10
+            st.session_state.alpha = 0.2; st.session_state.w_drop = 40
         st.button("👷 劳动密集型", use_container_width=True, key="preset_labor", on_click=_preset_labor)
     
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 核心算法 (Cobb-Douglas)
+# 4. 核心算法 (Cobb-Douglas)
 # ==========================================
-# 给定 Q 和要素价格，成本最小化的最优要素需求
 def optimal_inputs(Q, w, r, a):
-    """
-    min wL + rK  s.t. K^a * L^(1-a) = Q
-    解析解:
-    K* = Q * [a/(1-a) * w/r]^(1-a)
-    L* = Q * [(1-a)/a * r/w]^a
-    """
     K_opt = Q * (a / (1 - a) * w / r) ** (1 - a)
     L_opt = Q * ((1 - a) / a * r / w) ** a
     return K_opt, L_opt
 
-# 给定预算 C 和要素价格，产量最大化的要素需求 + 最大产量
 def max_output(C, w, r, a):
-    """
-    max K^a * L^(1-a)  s.t. wL + rK = C
-    解析解:
-    K* = a * C / r
-    L* = (1-a) * C / w
-    Q_max = K*^a * L*^(1-a)
-    """
     K_opt = a * C / r
     L_opt = (1 - a) * C / w
     Q_max = (K_opt ** a) * (L_opt ** (1 - a))
     return K_opt, L_opt, Q_max
 
-# 计算等产量线
 def isoquant(Q, L_range, a):
-    """对于产量 Q，给定 L 求 K: K = (Q / L^(1-a))^(1/a)"""
-    K = (Q / (L_range ** (1 - a))) ** (1 / a)
-    return K
+    return (Q / (L_range ** (1 - a))) ** (1 / a)
 
 # ==========================================
-# 三步解算
+# 5. 三步解算
 # ==========================================
-# 基准产量 Q0（以初始预算 C0 能生产的最大产量）
-K0_init = alpha * (w0 * 10 + r * 5) / r  # 随便取个初始比例作为 seed
-L0_init = (1 - alpha) * (w0 * 10 + r * 5) / w0
-# 用初始均衡点的成本反推：先随便取个 Q 算均衡，得到预算，再用预算算 Q0
-_, _ = optimal_inputs(100, w0, r, alpha)  # dummy to get ratio
-# 换个思路：设定一个合理的初始产量 Q0，让 L 大约在 50-200 区间
 Q0_guess = 100
 K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
-# 调整 Q0 让初始 L 在合理范围
-while L_tmp > 200:
-    Q0_guess /= 2
-    K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
-while L_tmp < 30:
-    Q0_guess *= 2
-    K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
-
+while L_tmp > 200: Q0_guess /= 2; K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
+while L_tmp < 30: Q0_guess *= 2; K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
 Q0 = Q0_guess
-C0 = w0 * L_tmp + r * K_tmp  # 初始总预算
+C0 = w0 * L_tmp + r * K_tmp
 
-# 点 A：初始最优要素组合（w0, r, Q0）
 K_A, L_A = optimal_inputs(Q0, w0, r, alpha)
-C_A = w0 * L_A + r * K_A
-
-# 点 B：替代效应后（w1, r, Q0）— 同产量，更低工资
 K_B, L_B = optimal_inputs(Q0, w1, r, alpha)
-C_B = w1 * L_B + r * K_B
-
-# 点 C：规模效应后（w1, r, 预算 C0）— 同预算，更高产量
 K_C, L_C, Q1 = max_output(C0, w1, r, alpha)
 
-# 效应量
-sub_K = K_A - K_B   # 替代效应：机器减少量
-sub_L = L_B - L_A   # 替代效应：工人增加量
-scale_K = K_C - K_B # 规模效应：机器增加量
-scale_L = L_C - L_B # 规模效应：工人增加量
-total_K = K_C - K_A
-total_L = L_C - L_A
+# ==========================================
+# 6. 连续插值解算
+# ==========================================
+t = progress / 100.0
+w_current = w0 + (w1 - w0) * t
+
+if t < 0.4:
+    t_sub = t / 0.4
+    K_cur, L_cur = optimal_inputs(Q0, w_current, r, alpha)
+    phase = "sub"
+else:
+    t_inc = (t - 0.4) / 0.6
+    K_cur = K_B + (K_C - K_B) * t_inc
+    L_cur = L_B + (L_C - L_B) * t_inc
+    phase = "inc"
 
 # ==========================================
-# Plotly 可视化
+# 7. Plotly 动态可视化
 # ==========================================
 L_plot = np.linspace(1, max(L_A, L_B, L_C) * 1.6, 300)
-K_iso_A = isoquant(Q0, L_plot, alpha)  # 等产量线 Q0
 
 fig = go.Figure()
 
-# --- 第一阶段：初始均衡 A ---
-# 等产量线 Q0
+# 等产量线 Q₀
+K_iso_A = isoquant(Q0, L_plot, alpha)
 fig.add_trace(go.Scatter(
     x=L_plot, y=K_iso_A,
     mode='lines', name="等产量线 Q₀",
-    line=dict(color='#3b82f6', width=3),
-    hovertemplate='工人: %{x:.0f}<br>机器人: %{y:.1f}<br>产量 Q₀<extra></extra>'
+    line=dict(color='rgba(59, 130, 246, 0.5)', width=2, dash='dot'),
+    hovertemplate=f'产量 Q₀={Q0:.0f}<extra></extra>'
 ))
+
 # 初始等成本线
-L_cost = np.array([0, C0 / w0])
-K_cost = np.array([C0 / r, 0])
+L_cost0 = np.array([0, C0 / w0])
+K_cost0 = np.array([C0 / r, 0])
 fig.add_trace(go.Scatter(
-    x=L_cost, y=K_cost,
+    x=L_cost0, y=K_cost0,
     mode='lines', name="初始等成本线",
-    line=dict(color='rgba(148, 163, 184, 0.8)', width=2),
-    hovertemplate='工人: %{x:.0f}<br>机器人: %{y:.1f}<extra></extra>'
+    line=dict(color='rgba(148, 163, 184, 0.4)', width=1.5, dash='dot'),
+    hovertemplate='初始预算 C₀<extra></extra>'
 ))
+
 # 点 A
 fig.add_trace(go.Scatter(
     x=[L_A], y=[K_A],
-    mode='markers+text', name="均衡点 A",
+    mode='markers+text', name="规划点 A",
     text=["A"], textposition="top right",
     textfont=dict(size=16, color='#3b82f6', family='Arial Black'),
-    marker=dict(size=16, color='#3b82f6', line=dict(width=2, color='white')),
-    hovertemplate=(
-        f'<b>点A：初始均衡</b><br>'
-        f'工人: {L_A:.0f} 人 | 机器人: {K_A:.1f} 台<br>'
-        f'产量 Q₀ | 工资 w₀={w0}万<br>'
-        f'总成本: {C_A:.0f} 万元<extra></extra>'
-    )
+    marker=dict(size=14, color='#3b82f6', line=dict(width=2, color='white')),
+    hovertemplate=f'<b>点A：初始规划</b><br>工人: {L_A:.0f} | 机器人: {K_A:.1f}<br>产量 Q₀ | 成本 {C0:.0f}万<extra></extra>'
 ))
 
-# --- 第二阶段：替代效应 B ---
-if "2" in step or "3" in step:
-    # 新等成本线（工资降低后，保持原产量）
-    # 画一条过B点的新等成本线（虚线）
-    C_B_line = w1 * L_B + r * K_B
-    L_cost_B = np.array([0, C_B_line / w1])
-    K_cost_B = np.array([C_B_line / r, 0])
-    fig.add_trace(go.Scatter(
-        x=L_cost_B, y=K_cost_B,
-        mode='lines', name="补贴后等成本线",
-        line=dict(color='#fbbf24', width=2.5, dash='dash'),
-        hovertemplate='💡 稳岗补贴后成本线<extra></extra>'
-    ))
-    
+# 当前等成本线（随补贴生效旋转）
+C_cur = w_current * L_cur + r * K_cur
+L_cost_cur = np.array([0, C0 / w_current])
+K_cost_cur = np.array([C0 / r, 0])
+fig.add_trace(go.Scatter(
+    x=L_cost_cur, y=K_cost_cur,
+    mode='lines', name=f"当前等成本线",
+    line=dict(color='#10b981', width=3.5),
+    hovertemplate=f'补贴后工资 {w_current:.0f}万<br>预算 C₀={C0:.0f}万<extra></extra>'
+))
+
+# B 点（替代效应终点）
+if progress > 5:
     fig.add_trace(go.Scatter(
         x=[L_B], y=[K_B],
         mode='markers+text', name="替代点 B",
         text=["B"], textposition="bottom right",
-        textfont=dict(size=16, color='#fbbf24', family='Arial Black'),
-        marker=dict(size=16, color='#fbbf24', symbol='diamond', line=dict(width=2, color='white')),
-        hovertemplate=(
-            f'<b>点B：纯替代效应</b><br>'
-            f'工人 +{sub_L:.0f} 人 | 机器人 -{sub_K:.1f} 台<br>'
-            f'产量不变 Q₀ | 成本降至 {C_B:.0f}万<br>'
-            f'💡 人便宜了→用人替机器<extra></extra>'
-        )
+        textfont=dict(size=14, color='#fbbf24', family='Arial Black'),
+        marker=dict(size=12, color='#fbbf24', symbol='diamond', line=dict(width=2, color='white')),
+        hovertemplate=f'<b>点B：纯替代效应</b><br>工人 +{L_B-L_A:.0f} | 机器人 -{K_A-K_B:.1f}<br>产量不变 Q₀<extra></extra>'
     ))
-    
-    # 替代效应箭头
-    fig.add_annotation(
-        x=L_B, y=(K_A + K_B) / 2, ax=L_A, ay=(K_A + K_B) / 2,
-        xref="x", yref="y", axref="x", ayref="y",
-        showarrow=True, arrowhead=3, arrowcolor="#fbbf24", arrowsize=1.8,
-        text=f"替代效应<br>L +{sub_L:.0f}, K -{sub_K:.1f}",
-        font=dict(size=11, color="#fbbf24")
-    )
 
-# --- 第三阶段：规模效应 C ---
-if "3" in step:
-    # 新等产量线 Q1
+# Q₁ 等产量线 + C 点
+if progress > 40:
     K_iso_C = isoquant(Q1, L_plot, alpha)
     fig.add_trace(go.Scatter(
         x=L_plot, y=K_iso_C,
         mode='lines', name=f"等产量线 Q₁",
-        line=dict(color='#34d399', width=3),
-        hovertemplate=f'产量 Q₁={Q1:.0f}<extra></extra>'
+        line=dict(color='rgba(52, 211, 153, 0.5)', width=2, dash='dot'),
+        hovertemplate=f'产量 Q₁={Q1:.0f} (+{(Q1/Q0-1)*100:.0f}%)<extra></extra>'
     ))
-    
-    # 原始预算下的新等成本线（w1, C0）
-    L_cost_C = np.array([0, C0 / w1])
-    K_cost_C = np.array([C0 / r, 0])
-    fig.add_trace(go.Scatter(
-        x=L_cost_C, y=K_cost_C,
-        mode='lines', name="原始预算+新工资",
-        line=dict(color='#34d399', width=3),
-        hovertemplate='预算 C₀ 但工资已降<extra></extra>'
-    ))
-    
     fig.add_trace(go.Scatter(
         x=[L_C], y=[K_C],
-        mode='markers+text', name="规模扩张点 C",
+        mode='markers+text', name="扩张点 C",
         text=["C"], textposition="top right",
         textfont=dict(size=16, color='#34d399', family='Arial Black'),
-        marker=dict(size=18, color='#34d399', symbol='star', line=dict(width=2, color='white')),
-        hovertemplate=(
-            f'<b>点C：规模效应爆发</b><br>'
-            f'工人 +{scale_L:.0f} 人 | 机器人 +{scale_K:.1f} 台<br>'
-            f'产量 Q₁={Q1:.0f} (+{(Q1/Q0-1)*100:.0f}%)<br>'
-            f'💡 成本省了→扩产→全要素增加<extra></extra>'
-        )
+        marker=dict(size=16, color='#34d399', symbol='star', line=dict(width=2, color='white')),
+        hovertemplate=f'<b>点C：规模效应</b><br>工人 +{L_C-L_B:.0f} | 机器人 +{K_C-K_B:.1f}<br>产量 Q₁={Q1:.0f}<extra></extra>'
     ))
-    
-    # 规模效应箭头 B→C
+
+# 当前点（拖动的球）
+fig.add_trace(go.Scatter(
+    x=[L_cur], y=[K_cur],
+    mode='markers', name="📍 当前位置",
+    marker=dict(size=22, color='#00f2fe', symbol='circle',
+                line=dict(width=4, color='white'), opacity=0.9),
+    hovertemplate=(
+        f'<b>🎚️ 当前位置 (进度 {progress}%)</b><br>'
+        f'工人: {L_cur:.0f} | 机器人: {K_cur:.1f}<br>'
+        f'工资: {w_current:.0f}万<extra></extra>'
+    )
+))
+
+# 拖尾轨迹
+trail_L, trail_K = [], []
+for ti in np.linspace(0, t, min(30, max(2, progress // 3 + 2))):
+    w_ti = w0 + (w1 - w0) * ti
+    if ti < 0.4:
+        t_sub_i = ti / 0.4
+        Ki, Li = optimal_inputs(Q0, w0 + (w1 - w0) * t_sub_i, r, alpha)
+    else:
+        t_inc_i = (ti - 0.4) / 0.6
+        Ki = K_B + (K_C - K_B) * t_inc_i
+        Li = L_B + (L_C - L_B) * t_inc_i
+    trail_L.append(Li); trail_K.append(Ki)
+
+if len(trail_L) > 1:
+    fig.add_trace(go.Scatter(
+        x=trail_L, y=trail_K,
+        mode='lines', name="运动轨迹",
+        line=dict(color='rgba(0, 242, 254, 0.4)', width=2),
+        hoverinfo='skip'
+    ))
+
+# 效应标注
+if progress > 5:
     fig.add_annotation(
-        x=L_C, y=(K_B + K_C) / 2, ax=L_B, ay=(K_B + K_C) / 2,
-        xref="x", yref="y", axref="x", ayref="y",
-        showarrow=True, arrowhead=3, arrowcolor="#34d399", arrowsize=1.8,
-        text=f"规模效应<br>L +{scale_L:.0f}, K +{scale_K:.1f}",
-        font=dict(size=11, color="#34d399")
+        x=(L_A + L_B) / 2, y=(K_A + K_B) / 2,
+        text=f"替代效应<br>人替机器",
+        showarrow=True, arrowhead=2, arrowcolor="#fbbf24", arrowsize=1,
+        font=dict(size=11, color="#fbbf24"), bgcolor="rgba(0,0,0,0.6)", borderpad=4
+    )
+if progress > 50:
+    fig.add_annotation(
+        x=(L_B + L_C) / 2, y=(K_B + K_C) / 2,
+        text=f"规模效应<br>全要素扩张",
+        showarrow=True, arrowhead=2, arrowcolor="#34d399", arrowsize=1,
+        font=dict(size=11, color="#34d399"), bgcolor="rgba(0,0,0,0.6)", borderpad=4
     )
 
 fig.update_layout(
@@ -357,95 +334,85 @@ with col_graph:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 动态诊断报告
+# 8. 动态诊断报告
 # ==========================================
 st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
 st.markdown("<div class='cyber-header'>💡 孪生系统智能诊断报告</div>", unsafe_allow_html=True)
 
-if "1" in step:
-    st.info(
-        f"📍 **当前阶段：初始要素规划**\n\n"
-        f"在当前工资 **{w0} 万元/人**、机器人租金 **{r} 万元/台** 的条件下，"
-        f"成本最小化的最优配置为：\n\n"
-        f"👷 雇佣 **{L_A:.0f} 名** 产业工人 | 🤖 部署 **{K_A:.1f} 台** 机器人\n"
-        f"📦 产量 Q₀ = **{Q0:.0f}** | 💰 总成本 = **{C_A:.0f} 万元**\n\n"
-        f"要素比例 K/L = {K_A/L_A:.2f}（资本密集度 α = {alpha}）\n\n"
-        f"👉 地方政府已出台稳岗补贴，请切换到「第二阶段」观察替代效应。"
-    )
+sub_K = K_A - K_B; sub_L = L_B - L_A
+scale_K = K_C - K_B; scale_L = L_C - L_B
 
-elif "2" in step:
-    st.warning(
-        f"⚡ **替代效应：要素替代正在发生**\n\n"
-        f"稳岗补贴使企业实际工资降至 **{w1:.1f} 万元**（降幅 {w_drop}%）。\n\n"
-        f"在保持产量 Q₀ 不变的前提下（沿等产量线滑动）：\n\n"
-        f"🔹 机器人 **减少 {sub_K:.1f} 台**（{sub_K/K_A*100:.0f}%）— 人比机器划算了\n"
-        f"🔹 工人 **增加 {sub_L:.0f} 人**（{sub_L/L_A*100:.0f}%）— 用人力替代自动化\n"
-        f"🔹 总成本从 {C_A:.0f} 降至 **{C_B:.0f} 万元**（节省 {C_A-C_B:.0f} 万）\n\n"
-        f"这就是**替代效应**——在产量不变时，工资下降促使企业用劳动替代资本。\n\n"
-        f"但故事还没完——省下来的钱去哪了？👉 切换到「第三阶段」。"
-    )
+col_r1, col_r2 = st.columns(2)
 
-elif "3" in step:
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.success(
-            f"**替代效应**\n\n"
-            f"👷 工人 **+{sub_L:.0f}** 人\n"
-            f"🤖 机器人 **-{sub_K:.1f}** 台\n\n"
-            f"产量不变 → 纯要素替代"
+with col_r1:
+    if progress < 20:
+        st.info(
+            f"📍 **补贴尚未显著生效** (工资 {w_current:.0f} 万)\n\n"
+            f"当前配置：👷 {L_cur:.0f} 人 + 🤖 {K_cur:.1f} 台\n"
+            f"产量 Q₀ = {Q0:.0f} | 总成本 = {C0:.0f} 万元\n\n"
+            f"👈 **向右拖动滑块**，让稳岗补贴逐步生效！"
         )
-    with c2:
-        st.success(
-            f"**规模效应**\n\n"
-            f"👷 工人 **+{scale_L:.0f}** 人\n"
-            f"🤖 机器人 **+{scale_K:.1f}** 台\n\n"
-            f"产能扩张 {Q1/Q0:.1f}× → 全要素增加"
-        )
-    with c3:
-        total_text = f"+{total_L:.0f}人, +{total_K:.1f}台"
-        st.success(
-            f"**总效应**\n\n"
-            f"👷 工人 **{total_text.split(',')[0]}**\n"
-            f"📦 产量 **+{(Q1/Q0-1)*100:.0f}%**\n\n"
-            f"替代+规模双重引擎"
-        )
-    
-    st.markdown("---")
-    
-    # 课程思政判断：工资是否压得过低
-    if w_drop > 50:
-        st.error(
-            f"⚠️ **孪生系统风控提示**\n\n"
-            f"当前工资降幅高达 **{w_drop}%**，虽然短期内通过替代效应大幅增加了劳动需求（+{total_L:.0f} 人），"
-            f"但这种「低工资扩张」模式不可持续：\n\n"
-            f"1. 过低的工资压缩了劳动者的人力资本积累空间，本质上是在透支「人口红利」\n"
-            f"2. 真正的高质量发展应主要依靠**规模效应**——通过技术创新降低成本、扩大产能，"
-            f"实现「产业升级」与「高质量就业」的双赢\n"
-            f"3. 稳岗补贴的初衷是**保就业而不压低工资**，合理的补贴力度应起到「四两拨千斤」的杠杆作用\n\n"
-            f"🏛️ **课程思政**：新质生产力战略强调「人才红利」而非「人口红利」。"
-            f"政府补贴的目的是激励企业通过技术创新（向外跃迁到 C 点）带动规模效应，"
-            f"而非鼓励企业无底线压低劳动力成本。"
+    elif progress < 60:
+        st.warning(
+            f"⚡ **替代效应主导** — 工资 {w0}→{w_current:.0f} 万\n\n"
+            f"沿等产量线 Q₀ 滑动：\n"
+            f"🤖 机器人 **-{sub_K:.1f} 台** ({sub_K/K_A*100:.0f}%)\n"
+            f"👷 工人 **+{sub_L:.0f} 人** ({sub_L/L_A*100:.0f}%)\n\n"
+            f"人比机器划算了，在产量不变下用人替机器。"
         )
     else:
         st.success(
-            f"✅ **良性扩张诊断**\n\n"
-            f"稳岗补贴（降幅 {w_drop}%）处于合理区间。总效应呈现「工人与机器人双增长」态势：\n\n"
-            f"⚡ 替代效应：工人 +{sub_L:.0f} 人（短期要素替代）\n"
-            f"📈 规模效应：工人 +{scale_L:.0f} 人，机器人 +{scale_K:.1f} 台（产能扩张 {Q1/Q0:.1f}×）\n\n"
-            f"🏛️ **关键结论**：当工资成本合理下降时，规模效应不仅增加了劳动需求，"
-            f"还带动了资本投入（机器人部署同步增加），实现了「产业升级 + 就业增长」的双赢格局。"
-            f"这正是中国制造业从「低成本竞争」转向「高质量智能制造」的微观基础。\n\n"
-            f"📚 **理论对应**：希克斯-马歇尔派生需求定理指出，当规模效应 > 替代效应时，"
-            f"劳动需求弹性较小且就业总体增长——本实验为这一定理提供了直观的数值验证。"
+            f"📈 **规模效应爆发** — 成本节省 {C0 - r*K_B - w1*L_B:.0f} 万\n\n"
+            f"CEO 决定用原预算扩产：\n"
+            f"👷 再招 **+{scale_L:.0f} 人** | 🤖 再加 **+{scale_K:.1f} 台**\n"
+            f"📦 产量 Q₀ → **Q₁ ({Q1:.0f})** 提升 **{(Q1/Q0-1)*100:.0f}%**"
         )
-    
-    st.markdown("---")
-    st.markdown(f"""
-    | | 工人 L | 机器人 K | 产量 Q | 总成本 |
-    |------|--------|---------|--------|--------|
-    | **A (初始)** | {L_A:.0f} | {K_A:.1f} | {Q0:.0f} | {C_A:.0f} |
-    | **B (替代)** | {L_B:.0f} (+{sub_L:.0f}) | {K_B:.1f} (-{sub_K:.1f}) | {Q0:.0f} (不变) | {C_B:.0f} |
-    | **C (规模)** | {L_C:.0f} (+{scale_L:.0f}) | {K_C:.1f} (+{scale_K:.1f}) | {Q1:.0f} (+{(Q1/Q0-1)*100:.0f}%) | {C0:.0f} (不变) |
-    """)
+
+with col_r2:
+    if progress > 20:
+        c1, c2 = st.columns(2)
+        with c1:
+            st.metric("替代效应", f"L +{sub_L:.0f}, K -{sub_K:.1f}",
+                     delta="要素替代")
+        with c2:
+            st.metric("规模效应", f"L +{scale_L:.0f}, K +{scale_K:.1f}",
+                     delta="产能扩张")
+        if progress > 60:
+            st.metric("总效应",
+                     f"L +{sub_L+scale_L:.0f}, K {K_C-K_A:+.1f}",
+                     delta=f"产量 {(Q1/Q0-1)*100:.0f}%↑")
+
+st.markdown("---")
+
+# 课程思政判断
+if w_drop > 50:
+    st.error(
+        f"⚠️ **孪生系统风控提示**\n\n"
+        f"当前工资降幅 **{w_drop}%**，虽然短期靠替代效应增加了 {sub_L:.0f} 个岗位，"
+        f"但过度压低劳动力成本不可持续：\n\n"
+        f"1. 压缩了劳动者的人力资本积累空间，透支「人口红利」\n"
+        f"2. 高质量发展应依靠**规模效应**——技术创新降低成本、扩大产能\n"
+        f"3. 稳岗补贴的初衷是「保就业而不压工资」\n\n"
+        f"🏛️ **新质生产力战略**强调从「人口红利」转向「人才红利」，"
+        f"政府补贴应激励企业通过技术创新实现产业升级与高质量就业的双赢。"
+    )
+else:
+    st.success(
+        f"✅ **良性扩张诊断** — 补贴降幅 {w_drop}% 处于合理区间\n\n"
+        f"规模效应不仅增加了劳动需求（+{scale_L:.0f} 人），"
+        f"还带动了资本投入同步增长（+{scale_K:.1f} 台机器人），"
+        f"实现了「产业升级 + 就业增长」双赢。\n\n"
+        f"📚 **希克斯-马歇尔定理**：当规模效应 > 替代效应时，"
+        f"工资下降带来的总就业增长更加显著。"
+    )
+
+# 数值对比表
+st.markdown(f"""
+| | 工人 L | 机器人 K | 产量 Q | 成本 |
+|------|--------|---------|--------|------|
+| **A (初始)** | {L_A:.0f} | {K_A:.1f} | {Q0:.0f} | {C0:.0f} |
+| **B (替代)** | {L_B:.0f} | {K_B:.1f} | {Q0:.0f} | {w1*L_B + r*K_B:.0f} |
+| **C (规模)** | {L_C:.0f} | {K_C:.1f} | {Q1:.0f} | {C0:.0f} |
+""")
 
 st.markdown("</div>", unsafe_allow_html=True)
