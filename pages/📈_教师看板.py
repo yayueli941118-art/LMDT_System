@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import COLOR, SHARED_CSS, render_page_banner, render_card_header
 
 st.set_page_config(page_title="教师看板", page_icon="📈", layout="wide")
-st.markdown(SHARED_CSS.format(color="#64748b", dark="#334155", light="#94a3b8"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(color="#64748b", dark="#334155", light="#94a3b8"), unsafe_allow_html=True)
 
 render_page_banner("📈", "教师看板 · 实验数据汇总", "Teaching Dashboard", "blue")
 

@@ -18,7 +18,7 @@ from shared import (
 )
 
 st.set_page_config(page_title="企业市场实验室", page_icon="🏭", layout="wide")
-st.markdown(SHARED_CSS.format(color=COLOR["market"], dark="#065f46", light="#10b981"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(color=COLOR["market"], dark="#065f46", light="#10b981"), unsafe_allow_html=True)
 
 render_page_banner("🏭", "企业市场实验室", "Market Lab", "green")
 

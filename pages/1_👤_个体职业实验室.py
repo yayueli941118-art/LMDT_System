@@ -23,7 +23,7 @@ from shared import (
 # 页面配置
 # ==========================================
 st.set_page_config(page_title="个体职业实验室", page_icon="👤", layout="wide")
-st.markdown(SHARED_CSS.format(color=COLOR["primary_light"], dark=COLOR["primary"], light=COLOR["primary_light"]), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(color=COLOR["primary_light"], dark=COLOR["primary"], light=COLOR["primary_light"]), unsafe_allow_html=True)
 
 render_page_banner("👤", "个体职业发展实验室", "Micro Lab", "blue")
 

@@ -25,7 +25,7 @@ from shared import (
 st.set_page_config(page_title="劳动供给决策", page_icon="⚖️", layout="wide")
 
 # 注入主题 CSS（紫色系，与宏观区分）
-st.markdown(SHARED_CSS.format(color="#8b5cf6", dark="#4c1d95", light="#7c3aed"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(color="#8b5cf6", dark="#4c1d95", light="#7c3aed"), unsafe_allow_html=True)
 
 # ==========================================
 # Banner

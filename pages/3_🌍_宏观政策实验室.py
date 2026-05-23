@@ -19,7 +19,7 @@ from shared import (
 )
 
 st.set_page_config(page_title="宏观政策实验室", page_icon="🌍", layout="wide")
-st.markdown(SHARED_CSS.format(color=COLOR["macro"], dark="#4c1d95", light="#8b5cf6"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(color=COLOR["macro"], dark="#4c1d95", light="#8b5cf6"), unsafe_allow_html=True)
 
 render_page_banner("🌍", "宏观政策实验室", "Macro Lab", "purple")
 
