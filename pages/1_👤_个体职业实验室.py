@@ -209,8 +209,8 @@ if migrate and w_diff > 0:
     migrate_years, migrate_npv = calc_migration_npv(5, 5 + w_diff, c_move, c_psych)
 
 # 一生累计收入（简化）
-lifetime_edu = np.trapz(w_exp, exp_vec)
-lifetime_base = np.trapz(w_base, exp_vec)
+lifetime_edu = np.trapezoid(w_exp, exp_vec)
+lifetime_base = np.trapezoid(w_base, exp_vec)
 premium = (lifetime_edu / lifetime_base - 1) * 100
 
 # ==========================================
