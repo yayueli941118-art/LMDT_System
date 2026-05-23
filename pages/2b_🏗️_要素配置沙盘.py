@@ -24,8 +24,14 @@ st.markdown("""
         background-color: #090d16 !important;
         border-right: 1px solid rgba(16, 185, 129, 0.1) !important;
     }
-    .stApp label, .stApp p, .stApp span, .stApp h1, .stApp h2, .stApp h3, .stApp h4 {
+    .stApp label, .stApp p, .stApp span,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
+    .stApp li, .stApp strong, .stApp b, .stApp em, .stMarkdown {
         color: #e2e8f0 !important;
+    }
+    .stMarkdown table th, .stMarkdown table td {
+        border-color: rgba(148, 163, 184, 0.3) !important;
+        color: #cbd5e1 !important;
     }
     div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
         color: #10b981 !important; font-weight: 600 !important;
