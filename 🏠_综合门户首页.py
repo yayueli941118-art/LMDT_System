@@ -127,6 +127,7 @@ with col1:
             <span class="card-tag">Ch1/2 供给</span>
             <span class="card-tag">Ch5 人力资本</span>
             <span class="card-tag">Ch6 流动</span>
+            <span class="card-tag" style="background:#f3e8ff; color:#7c3aed; border:1px solid #a78bfa;">★ 迁徙仿真</span>
         </div>
     </div>
     """, unsafe_allow_html=True)

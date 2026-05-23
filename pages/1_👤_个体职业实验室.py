@@ -196,6 +196,10 @@ with col_ctrl:
         def _preset_worker(): st.session_state.edu = 12; st.session_state.migrate = True
         st.button("🏭 打工", key="worker", on_click=_preset_worker, use_container_width=True)
     
+    st.markdown("---")
+    st.page_link("pages/1c_✈️_迁移决策仿真.py", label="✈️ 深度迁移决策仿真 →", use_container_width=True)
+    st.page_link("pages/1b_⚖️_劳动供给决策.py", label="⚖️ 收入/替代效应分解 →", use_container_width=True)
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
