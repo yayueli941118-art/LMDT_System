@@ -1,352 +1,372 @@
 """
-⚖️ 劳动供给决策实验室 — 收入效应 vs 替代效应分解
-国赛级交互模块：解决"最难懂的概念"痛点
+劳动供给决策实验室 — 收入效应 vs 替代效应分步拆解
+教学竞赛级：脚手架式探究 (Learning Scaffolding) + Cobb-Douglas 精确解算
 """
 
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
-from datetime import datetime
-import sys
-import os
+import sys, os
 
-# 添加共享模块路径
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-from shared import (
-    COLOR, SHARED_CSS, get_lab_css,
-    render_page_banner, render_metric_card, render_card_header,
-    calc_income_substitution_effect,
-    generate_lab_report, generate_report_download,
-)
+# 安全引入共享模块
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from shared import render_page_banner, render_metric_card
 
 # ==========================================
 # 页面配置
 # ==========================================
 st.set_page_config(page_title="劳动供给决策", page_icon="⚖️", layout="wide")
 
-# 注入主题 CSS（紫色系，与宏观区分）
-st.markdown(SHARED_CSS(color="#8b5cf6", dark="#4c1d95", light="#7c3aed"), unsafe_allow_html=True)
-
 # ==========================================
-# Banner
-# ==========================================
-render_page_banner(
-    icon="⚖️",
-    title="劳动供给决策实验室",
-    subtitle="收入效应 vs 替代效应",
-    theme="purple"
-)
-
-# ==========================================
-# 教学引导
+# 赛博暗色 UI
 # ==========================================
 st.markdown("""
-<div class="card" style="background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border-color: #a78bfa;">
-<h4 style="color:#5b21b6;">📖 核心概念</h4>
-<p>当工资率上升时，劳动者的工作时间会如何变化？答案取决于<strong>两种效应的博弈</strong>：</p>
-<ul>
-<li><strong>替代效应 (Substitution Effect)</strong>：工资高了 → 闲暇的"价格"变贵 → 你愿意<strong>多工作</strong>（用劳动替代闲暇）</li>
-<li><strong>收入效应 (Income Effect)</strong>：工资高了 → 同样的工作时间能赚更多 → 你<strong>少工作</strong>也可以维持生活水平</li>
-</ul>
-<p>当工资水平较低时，替代效应 > 收入效应 → 劳动供给 <strong>↑</strong>；当工资水平较高时，收入效应 > 替代效应 → 劳动供给可能 <strong>↓</strong>（向后弯曲的劳动供给曲线）。</p>
+<style>
+    html, body, [class*="css"] { 
+        font-family: 'Microsoft YaHei', 'JetBrains Mono', sans-serif !important;
+        background-color: #0b0f19; color: #e2e8f0;
+    }
+    .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    .tech-card {
+        background: linear-gradient(145deg, #111827 0%, #1e293b 100%);
+        border: 1px solid rgba(56, 189, 248, 0.15);
+        border-radius: 14px;
+        padding: 24px;
+        margin-bottom: 18px;
+        box-shadow: 0 0 30px rgba(56, 189, 248, 0.05);
+    }
+    .cyber-header {
+        font-size: 20px;
+        font-weight: 700;
+        color: #38bdf8;
+        margin-bottom: 16px;
+        border-left: 4px solid #38bdf8;
+        padding-left: 12px;
+        letter-spacing: 1px;
+    }
+    
+    /* 步骤选择器高亮 */
+    div[data-testid="stRadio"] label {
+        color: #94a3b8 !important;
+        font-size: 15px !important;
+    }
+    div[data-testid="stRadio"] label[data-selected="true"] {
+        color: #38bdf8 !important;
+        font-weight: 700 !important;
+    }
+    
+    /* 滑块 */
+    .stSlider label { color: #cbd5e1 !important; font-weight: 500; }
+    
+    /* Metric增强 */
+    div[data-testid="stMetric"] {
+        background: rgba(56, 189, 248, 0.06);
+        border: 1px solid rgba(56, 189, 248, 0.12);
+        border-radius: 10px;
+        padding: 12px 16px;
+    }
+    div[data-testid="stMetric"] label { color: #64748b !important; }
+    div[data-testid="stMetricValue"] { color: #38bdf8 !important; font-family: 'JetBrains Mono', monospace; }
+</style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# 顶部 Banner
+# ==========================================
+st.markdown("""
+<div style="margin-bottom: 20px;">
+    <h1 style="color: #ffffff; font-weight: 900; margin-bottom: 5px;">⚖️ 劳动供给决策实验室</h1>
+    <h4 style="color: #38bdf8; font-weight: 600; letter-spacing: 1px;">
+        重难点突破：工作-闲暇决策与双效应拆解 <span style="color:#64748b; font-weight:400;">(Micro-Simulation)</span>
+    </h4>
 </div>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 参数设置
+# 经济学底层算法 (Cobb-Douglas: U(L,Y) = L × Y)
 # ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("🎛️ 实验参数设置", color="#8b5cf6", dark_color="#4c1d95")
+def calc_equilibrium(w, V):
+    """
+    给定工资率 w 和非劳动收入 V，求最优闲暇 L*
+    max U = L × Y  s.t. Y = w×(24-L) + V
+    解析解: L* = 12 + V/(2w)
+    """
+    L_opt = 12 + V / (2 * w)
+    L_opt = min(L_opt, 24)
+    Y_opt = w * (24 - L_opt) + V
+    U_max = L_opt * Y_opt
+    return L_opt, Y_opt, U_max
 
-col1, col2, col3, col4 = st.columns(4)
-with col1:
-    wage_initial = st.slider("初始工资率 (元/小时)", 10, 100, 25, key="wage_init")
-with col2:
-    wage_new = st.slider("新工资率 (元/小时)", 15, 100, 45, key="wage_new_slider")
-with col3:
-    beta = st.slider("闲暇偏好 β（越大越爱休息）", 0.2, 0.8, 0.5, 0.05,
-                      help="β=0.5表示闲暇与消费同等重要；β>0.5表示更重视闲暇")
-with col4:
-    st.markdown("##### 📊 情景预设")
+def calc_indifference_curve(U, L_range):
+    """由效用水平 U 反解 Y = U / L"""
+    return U / L_range
+
+def calc_hicks_compensation(w_new, U_old):
+    """
+    希克斯补偿点 B：
+    在旧无差异曲线上，找 MRS = w_new 的点
+    MRS = Y/L = w_new → Y = w_new × L
+    代入 U_old = L × Y = w_new × L² → L = √(U_old/w_new)
+    """
+    L_comp = np.sqrt(U_old / w_new)
+    Y_comp = U_old / L_comp
+    intercept = Y_comp + w_new * L_comp  # 补偿预算线截距
+    return L_comp, Y_comp, intercept
+
+# ==========================================
+# 互动控制台
+# ==========================================
+col_ctrl, col_graph = st.columns([1, 2.5])
+
+with col_ctrl:
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='cyber-header'>🎛️ 参数注射器</div>", unsafe_allow_html=True)
     
-    def _preset_rise():
-        st.session_state.wage_init = 20
-        st.session_state.wage_new_slider = 40
-        st.session_state.beta_slider = 0.5
+    w0 = st.slider("初始工资率 (w₀ 元/小时)", 5, 50, 15, key="w0")
+    w1 = st.slider("冲击后新工资率 (w₁ 元/小时)", w0, 100, w0 + 20, key="w1")
+    V = st.slider("非劳动收入 (V 元/天)", 0, 500, 150, step=10, key="V",
+                  help="如：基金分红、房屋租金、家人转账等不依赖劳动的每日收入")
     
-    def _preset_fall():
-        st.session_state.wage_init = 80
-        st.session_state.wage_new_slider = 40
-        st.session_state.beta_slider = 0.5
+    st.markdown("<hr style='border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
+    st.markdown("<div class='cyber-header'>👣 探究进度控制</div>", unsafe_allow_html=True)
     
-    col4a, col4b = st.columns(2)
-    with col4a:
-        st.button("💰 低工资→高工资", use_container_width=True, key="preset_rise", on_click=_preset_rise)
-    with col4b:
-        st.button("📉 高工资→低工资", use_container_width=True, key="preset_fall", on_click=_preset_fall)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 核心计算
-# ==========================================
-results = calc_income_substitution_effect(wage_initial, wage_new, beta)
-T = 24
-
-# 生成预算线数据
-L_range = np.linspace(0.5, T - 0.5, 100)
-
-# 初始预算线
-C_budget_init = wage_initial * L_range
-# 新高预算线
-C_budget_new = wage_new * L_range
-# 补偿预算线（过L_substitution点，斜率=wage_new）
-# C = C_substitution + wage_new * (L - L_substitution)
-compensation_intercept = results["C_substitution"] - wage_new * results["L_substitution"]
-C_budget_comp = compensation_intercept + wage_new * L_range
-
-# 无差异曲线数据（初始效用水平）
-U0 = (results["L_initial"] ** beta) * (results["C_initial"] ** (1 - beta))
-L_ic = np.linspace(1, T - 1, 100)
-C_ic_init = (U0 / (L_ic ** beta)) ** (1 / (1 - beta))
-C_ic_init = np.clip(C_ic_init, 0, wage_new * T)  # 限制范围
+    step = st.radio(
+        "选择观测阶段：",
+        ["1. 基准状态 (初始均衡 A)",
+         "2. 替代效应剥离 (点 A → B)",
+         "3. 收入效应与最终均衡 (点 B → C)"],
+        key="step"
+    )
+    
+    # 快捷预设
+    st.markdown("<hr style='border-color: rgba(56, 189, 248, 0.2);'>", unsafe_allow_html=True)
+    st.caption("📊 快捷情景")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        def _preset_rise():
+            st.session_state.w0 = 15
+            st.session_state.w1 = 40
+            st.session_state.V = 150
+        st.button("💰 低→高工资", use_container_width=True, key="preset_rise", on_click=_preset_rise)
+    with col_b:
+        def _preset_fall():
+            st.session_state.w0 = 70
+            st.session_state.w1 = 35
+            st.session_state.V = 300
+        st.button("📉 高→低工资", use_container_width=True, key="preset_fall", on_click=_preset_fall)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 步骤式教学展示
+# 数据解算
 # ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📊 分步解析：收入效应与替代效应", color="#8b5cf6", dark_color="#4c1d95")
+L_array = np.linspace(0.1, 25, 200)
 
-show_step = st.radio("选择展示步骤：",
-                     ["🔴 步骤1：初始均衡 (点A)",
-                      "🟡 步骤2：工资上升 → 替代效应 (点A → 点B)",
-                      "🟢 步骤3：收入效应 → 最终均衡 (点B → 点C)",
-                      "🔵 全部展示 (点A → 点B → 点C)"],
-                     index=3, horizontal=True)
+# A 点：初始均衡
+L_A, Y_A, U_A = calc_equilibrium(w0, V)
+# C 点：最终均衡
+L_C, Y_C, U_C = calc_equilibrium(w1, V)
+# B 点：希克斯补偿
+L_B, Y_B, comp_intercept = calc_hicks_compensation(w1, U_A)
 
-# 构建图表
+# 效应量
+sub_effect = L_A - L_B  # 替代效应：闲暇减少量（正=劳动增加）
+inc_effect = L_B - L_C  # 收入效应：闲暇回弹量（正=再次减少，负=回增）
+
+# ==========================================
+# Plotly 赛博可视化
+# ==========================================
 fig = go.Figure()
 
-# 预算线
-fig.add_trace(go.Scatter(x=L_range, y=C_budget_init,
-    mode='lines', name=f'初始预算线 (w={wage_initial})',
-    line=dict(color='#94a3b8', width=2, dash='dash')))
-
-if show_step in ["🟡 步骤2：工资上升 → 替代效应 (点A → 点B)", 
-                 "🟢 步骤3：收入效应 → 最终均衡 (点B → 点C)",
-                 "🔵 全部展示 (点A → 点B → 点C)"]:
-    # 新高预算线
-    fig.add_trace(go.Scatter(x=L_range, y=C_budget_new,
-        mode='lines', name=f'新高预算线 (w={wage_new})',
-        line=dict(color='#3b82f6', width=3)))
-    
-    # 补偿预算线（虚线，过B点，斜率=新高工资）
-    L_comp_range = np.linspace(
-        max(0.5, results["L_substitution"] - 6),
-        min(T - 0.5, results["L_substitution"] + 6),
-        50
-    )
-    C_comp_line = compensation_intercept + wage_new * L_comp_range
-    C_comp_line = np.clip(C_comp_line, 0, wage_new * T)
-    valid_mask = C_comp_line > 0
-    fig.add_trace(go.Scatter(
-        x=L_comp_range[valid_mask], y=C_comp_line[valid_mask],
-        mode='lines', name='补偿预算线 (虚)',
-        line=dict(color='#f59e0b', width=2, dash='dot')))
-
-# 无差异曲线
-fig.add_trace(go.Scatter(x=L_ic, y=C_ic_init,
-    mode='lines', name=f'无差异曲线 U₀',
-    line=dict(color='#d1d5db', width=2)))
-
-# 标注点A：初始均衡
+# --- 第一阶段：A 点基准 ---
 fig.add_trace(go.Scatter(
-    x=[results["L_initial"]], y=[results["C_initial"]],
-    mode='markers+text', name='点A：初始均衡',
-    marker=dict(size=18, color='#ef4444', symbol='circle', line=dict(width=2, color='white')),
-    text=['A'], textposition='top center',
-    textfont=dict(size=14, color='#ef4444', family='Arial Black'),
+    x=[0, 24, 24], y=[w0 * 24 + V, V, 0],
+    mode='lines', name="初始预算线",
+    line=dict(color='rgba(148, 163, 184, 0.8)', width=2),
+    hovertemplate='闲暇: %{x:.1f}h<br>收入: %{y:.0f}元<extra></extra>'
+))
+
+Y_indiff_A = calc_indifference_curve(U_A, L_array)
+fig.add_trace(go.Scatter(
+    x=L_array, y=Y_indiff_A,
+    mode='lines', name="初始效用 U₀",
+    line=dict(color='#3b82f6', width=3),
+    hovertemplate='闲暇: %{x:.1f}h<br>收入: %{y:.0f}元<br>效用 U₀<extra></extra>'
+))
+
+fig.add_trace(go.Scatter(
+    x=[L_A], y=[Y_A],
+    mode='markers+text', name="均衡点 A",
+    text=["A"], textposition="top right",
+    textfont=dict(size=16, color='#3b82f6', family='Arial Black'),
+    marker=dict(size=16, color='#3b82f6', line=dict(width=2, color='white')),
     hovertemplate=(
         f'<b>点A：初始均衡</b><br>'
-        f'工作时间: {results["L_initial"]:.1f} 小时<br>'
-        f'休闲时间: {T - results["L_initial"]:.1f} 小时<br>'
-        f'日收入: {results["C_initial"]:.1f} 元<br>'
-        f'工资率: {wage_initial} 元/小时<br>'
-        f'<extra></extra>'
+        f'闲暇: {L_A:.1f}h | 工作: {24-L_A:.1f}h<br>'
+        f'收入: {Y_A:.0f}元 | 工资: {w0}元/h<br>'
+        f'效用: {U_A:.0f}<extra></extra>'
     )
 ))
 
-if show_step in ["🟡 步骤2：工资上升 → 替代效应 (点A → 点B)", 
-                 "🟢 步骤3：收入效应 → 最终均衡 (点B → 点C)",
-                 "🔵 全部展示 (点A → 点B → 点C)"]:
-    # 点B：替代效应后
+# --- 第二阶段：替代效应 B 点 ---
+if "2" in step or "3" in step:
+    # 希克斯补偿线
     fig.add_trace(go.Scatter(
-        x=[results["L_substitution"]], y=[results["C_substitution"]],
-        mode='markers+text', name='点B：替代效应',
-        marker=dict(size=18, color='#f59e0b', symbol='diamond', line=dict(width=2, color='white')),
-        text=['B'], textposition='top center',
-        textfont=dict(size=14, color='#f59e0b', family='Arial Black'),
+        x=[0, 24], y=[comp_intercept, comp_intercept - w1 * 24],
+        mode='lines', name="希克斯补偿线",
+        line=dict(color='#fbbf24', width=2.5, dash='dash'),
+        hovertemplate='闲暇: %{x:.1f}h<br>💡 补偿预算线（保持旧效用）<extra></extra>'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[L_B], y=[Y_B],
+        mode='markers+text', name="虚拟点 B",
+        text=["B"], textposition="bottom left",
+        textfont=dict(size=16, color='#fbbf24', family='Arial Black'),
+        marker=dict(size=16, color='#fbbf24', symbol='diamond', line=dict(width=2, color='white')),
         hovertemplate=(
             f'<b>点B：纯替代效应</b><br>'
-            f'工作时间: {results["L_substitution"]:.1f} 小时<br>'
-            f'日收入: {results["C_substitution"]:.1f} 元<br>'
-            f'替代效应: {results["substitution_effect"]:+.1f} 小时<br>'
-            f'💡 工资提高，闲暇变贵，多工作！<br>'
-            f'<extra></extra>'
+            f'闲暇减少: {sub_effect:.2f}h → 多工作<br>'
+            f'效用不变(补偿后)<br>'
+            f'💡 工资↑→闲暇变贵→多工作<extra></extra>'
         )
     ))
     
-    # 点A→B的箭头线
-    fig.add_annotation(x=results["L_substitution"], y=results["C_substitution"],
-        text=f'替代效应：{results["substitution_effect"]:+.1f}h',
-        ax=results["L_initial"], ay=results["C_initial"],
-        showarrow=True, arrowhead=2, arrowsize=1.5,
-        arrowcolor='#f59e0b',
-        font=dict(size=12, color='#92400e'))
+    # 替代效应箭头 A→B
+    fig.add_annotation(
+        x=L_B, y=Y_A * 0.55, ax=L_A, ay=Y_A * 0.55,
+        xref="x", yref="y", axref="x", ayref="y",
+        showarrow=True, arrowhead=3, arrowcolor="#fbbf24", arrowsize=1.8,
+        text=f"替代效应<br>闲暇 -{sub_effect:.1f}h", font=dict(size=11, color="#fbbf24")
+    )
 
-if show_step in ["🟢 步骤3：收入效应 → 最终均衡 (点B → 点C)",
-                 "🔵 全部展示 (点A → 点B → 点C)"]:
-    # 点C：最终均衡
+# --- 第三阶段：收入效应 C 点 ---
+if "3" in step:
+    # 新预算线
     fig.add_trace(go.Scatter(
-        x=[results["L_final"]], y=[results["C_final"]],
-        mode='markers+text', name='点C：最终均衡',
-        marker=dict(size=20, color='#10b981', symbol='star', line=dict(width=2, color='white')),
-        text=['C'], textposition='top center',
-        textfont=dict(size=16, color='#10b981', family='Arial Black'),
+        x=[0, 24, 24], y=[w1 * 24 + V, V, 0],
+        mode='lines', name="新预算线",
+        line=dict(color='#34d399', width=3),
+        hovertemplate='闲暇: %{x:.1f}h<br>收入: %{y:.0f}元<br>新预算 (w₁)<extra></extra>'
+    ))
+    
+    Y_indiff_C = calc_indifference_curve(U_C, L_array)
+    fig.add_trace(go.Scatter(
+        x=L_array, y=Y_indiff_C,
+        mode='lines', name="新效用 U₁",
+        line=dict(color='#34d399', width=3),
+        hovertemplate='闲暇: %{x:.1f}h<br>收入: %{y:.0f}元<br>效用 U₁<extra></extra>'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[L_C], y=[Y_C],
+        mode='markers+text', name="最终均衡 C",
+        text=["C"], textposition="top right",
+        textfont=dict(size=16, color='#34d399', family='Arial Black'),
+        marker=dict(size=18, color='#34d399', symbol='star', line=dict(width=2, color='white')),
         hovertemplate=(
             f'<b>点C：最终均衡</b><br>'
-            f'工作时间: {results["L_final"]:.1f} 小时<br>'
-            f'日收入: {results["C_final"]:.1f} 元<br>'
-            f'收入效应: {results["income_effect"]:+.1f} 小时<br>'
-            f'{("💡 收入提高，享受更多闲暇，少工作！" if results["income_effect"] < 0 else "💡 收入尚未产生明显抑制效应")}<br>'
-            f'<extra></extra>'
+            f'闲暇: {L_C:.1f}h | 工作: {24-L_C:.1f}h<br>'
+            f'收入: {Y_C:.0f}元 | 工资: {w1}元/h<br>'
+            f'效用: {U_C:.0f}<extra></extra>'
         )
     ))
     
-    # 点B→C的箭头线
-    fig.add_annotation(x=results["L_final"], y=results["C_final"],
-        text=f'收入效应：{results["income_effect"]:+.1f}h',
-        ax=results["L_substitution"], ay=results["C_substitution"],
-        showarrow=True, arrowhead=2, arrowsize=1.5,
-        arrowcolor='#10b981',
-        font=dict(size=12, color='#065f46'))
+    # 收入效应箭头 B→C
+    inc_dir = "回增" if inc_effect < 0 else "续减"
+    inc_text = f"收入效应<br>闲暇 {inc_dir} {abs(inc_effect):.1f}h"
+    fig.add_annotation(
+        x=L_C, y=Y_B * 0.3, ax=L_B, ay=Y_B * 0.3,
+        xref="x", yref="y", axref="x", ayref="y",
+        showarrow=True, arrowhead=3, arrowcolor="#34d399", arrowsize=1.8,
+        text=inc_text, font=dict(size=11, color="#34d399")
+    )
 
+# 图表布局
 fig.update_layout(
-    xaxis=dict(title="工作时间 L (小时/天)", range=[0, T], dtick=4),
-    yaxis=dict(title="日消费/收入 C (元/天)", range=[0, wage_new * T * 1.1]),
-    template="plotly_white",
+    xaxis_title="闲暇时间 L (小时/天)",
+    yaxis_title="总收入 Y (元/天)",
+    xaxis=dict(range=[0, 26], gridcolor="rgba(51, 65, 85, 0.3)", zerolinecolor="rgba(100, 116, 139, 0.5)"),
+    yaxis=dict(range=[0, max(w1 * 24 + V, comp_intercept) + 80], gridcolor="rgba(51, 65, 85, 0.3)", zerolinecolor="rgba(100, 116, 139, 0.5)"),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(color="#e2e8f0", size=13),
     height=550,
-    margin=dict(l=20, r=20, t=10, b=20),
+    margin=dict(l=40, r=20, t=40, b=40),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     hovermode='closest'
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 数值分解表格
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📋 效应分解明细", color="#8b5cf6", dark_color="#4c1d95")
-
-c1, c2, c3, c4 = st.columns(4)
-with c1:
-    sub_color = "positive" if results["substitution_effect"] > 0 else "negative"
-    render_metric_card("替代效应（工作小时变化）", f"{results['substitution_effect']:+.2f} h", sub_color)
-    st.caption("工资↑ → 闲暇变贵 → 多工作")
-    
-with c2:
-    inc_color = "negative" if results["income_effect"] < 0 else ("positive" if results["income_effect"] > 0 else "neutral")
-    render_metric_card("收入效应（工作小时变化）", f"{results['income_effect']:+.2f} h", inc_color)
-    st.caption("工资↑ → 同样收入更少工作 → 可能少工作")
-    
-with c3:
-    total_color = "positive" if results["total_effect"] > 0 else ("negative" if results["total_effect"] < 0 else "neutral")
-    render_metric_card("净效应（总变化）", f"{results['total_effect']:+.2f} h", total_color)
-    st.caption("替代效应 + 收入效应")
-    
-with c4:
-    dominant = "替代效应占主导" if results["substitution_effect"] + results["income_effect"] > 0 else "收入效应占主导"
-    dominant_color = "positive" if "替代" in dominant else "negative"
-    render_metric_card("主导效应", dominant, dominant_color)
-
-st.markdown('</div>', unsafe_allow_html=True)
+with col_graph:
+    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 文字解释
+# 动态诊断报告
 # ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📝 经济学解释", color="#8b5cf6", dark_color="#4c1d95")
+st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+st.markdown("<div class='cyber-header'>💡 孪生系统智能诊断报告</div>", unsafe_allow_html=True)
 
-# 动态解释
-if results["total_effect"] > 1:
-    st.success(f"""
-    **当前情景下，替代效应 > 收入效应**，工资从 {wage_initial} 元/小时 提高到 {wage_new} 元/小时后：
+if "1" in step:
+    st.info(
+        f"📍 **当前阶段：基准状态**\n\n"
+        f"在初始工资 **{w0} 元/小时** 下，劳动者每天选择享受 **{L_A:.1f} 小时** 闲暇，"
+        f"工作 **{24 - L_A:.1f} 小时**，日收入 **{Y_A:.0f} 元**。\n\n"
+        f"无差异曲线与预算线在 **点A** 处相切，达到效用最大化（U = {U_A:.0f}）。\n\n"
+        f"👉 请切换到「第二阶段」施加工资冲击，观察替代效应。"
+    )
+
+elif "2" in step:
+    st.warning(
+        f"⚡ **替代效应已显现**\n\n"
+        f"工资从 {w0} → {w1} 元/小时后，闲暇的「机会成本」变高了！\n\n"
+        f"🔹 如果只考虑**价格变化**（保持原有效用水平不变，沿虚线滑动）：\n"
+        f"　　劳动者会将闲暇减少 **{sub_effect:.2f} 小时**（即多工作 {sub_effect:.2f}h），\n"
+        f"　　这是**纯粹的替代效应**——闲暇变贵，用劳动替代闲暇。\n\n"
+        f"👉 切换到「第三阶段」，观察收入效应如何抵消这一趋势。"
+    )
+
+elif "3" in step:
+    total_work_change = sub_effect + inc_effect
     
-    - 🟡 **替代效应**使劳动者愿意多工作 **{results['substitution_effect']:.1f}** 小时（闲暇变得昂贵）
-    - 🟢 **收入效应**使劳动者想少工作 **{abs(results['income_effect']):.1f}** 小时（收入已足够）
-    - 🔵 **净效应**：工作时间净增加 **{results['total_effect']:.1f}** 小时
+    col_r1, col_r2, col_r3 = st.columns(3)
+    with col_r1:
+        render_metric_card("替代效应", f"闲暇 -{sub_effect:.2f} h", "positive")
+        st.caption("工资↑ → 闲暇变贵 → 多工作")
+    with col_r2:
+        inc_color = "negative" if inc_effect < 0 else "positive"
+        inc_sign = "-" if inc_effect < 0 else "+"
+        render_metric_card("收入效应", f"闲暇 {inc_sign}{abs(inc_effect):.2f} h", inc_color)
+        st.caption("工资↑ → 变富了 → 可能少工作")
+    with col_r3:
+        if total_work_change > 0:
+            st.success(
+                f"**替代效应主导**\n\n"
+                f"工作时间净增 **+{total_work_change:.2f} h**\n\n"
+                f"劳动者仍处于「为收入而工作」阶段\n"
+                f"→ 正斜率的劳动供给区间"
+            )
+        else:
+            st.warning(
+                f"**收入效应主导**\n\n"
+                f"工作时间净变化 **{total_work_change:.2f} h**\n\n"
+                f"工资越高，越愿享受闲暇\n"
+                f"→ 向后弯曲的劳动供给曲线！"
+            )
     
-    这说明在当前工资水平下，劳动者仍处于「为收入而工作」阶段，替代效应占优。
-    """)
-elif results["total_effect"] < -0.5:
-    st.warning(f"""
-    **当前情景下，收入效应 > 替代效应**，工资从 {wage_initial} 元/小时 提高到 {wage_new} 元/小时后：
-    
-    - 🟡 **替代效应**使劳动者愿意多工作 **{results['substitution_effect']:.1f}** 小时
-    - 🟢 **收入效应**使劳动者想少工作 **{abs(results['income_effect']):.1f}** 小时（工作更少也能达到目标收入）
-    - 🔴 **净效应**：工作时间净减少 **{abs(results['total_effect']):.1f}** 小时
-    
-    这说明劳动者已进入「向后弯曲」的劳动供给区段——工资越高，反而越愿意享受闲暇。
-    这正是劳动经济学中「向后弯曲的劳动供给曲线」的微观基础！
-    """)
-else:
-    st.info(f"""
-    **当前情景下，替代效应与收入效应基本抵消。**
-    
-    工资从 {wage_initial} 元/小时 提高到 {wage_new} 元/小时后，
-    替代效应（+{results['substitution_effect']:.1f}h）与收入效应（{results['income_effect']:.1f}h）互相抵消，
-    总劳动供给几乎不变。
-    """)
+    st.markdown("---")
+    st.success(
+        f"⚖️ **双效应博弈完成**\n\n"
+        f"随着真实收入提升，劳动者觉得自己「变富了」，"
+        f"于是赎回了 **{abs(inc_effect):.2f} 小时** 的闲暇（点B → 点C，即**收入效应**）。\n\n"
+        f"最终均衡：每天闲暇 **{L_C:.1f} h**，工作 **{24 - L_C:.1f} h**，日收入 **{Y_C:.0f} 元**（效用 U = {U_C:.0f}）\n\n"
+        f"🔑 **核心结论**：当工资上升时，替代效应推动劳动供给 ↑，收入效应推动劳动供给 ↓。"
+        f"两者博弈决定了劳动供给曲线的形状——这正是「向后弯曲的劳动供给曲线」的微观基础。"
+    )
 
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 实验报告
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📝 实验报告生成", color="#8b5cf6", dark_color="#4c1d95")
-
-params = {
-    "初始工资率": f"{wage_initial} 元/小时",
-    "新工资率": f"{wage_new} 元/小时",
-    "闲暇偏好 β": f"{beta}",
-}
-
-analysis_text = f"""### 1. 工资变动与劳动供给反应
-工资从 **{wage_initial} 元/小时** 提升至 **{wage_new} 元/小时**。
-
-### 2. 效应分解
-- 替代效应：劳动供给变化 **{results['substitution_effect']:+.2f}** 小时
-- 收入效应：劳动供给变化 **{results['income_effect']:+.2f}** 小时
-- 净效应：劳动供给总变化 **{results['total_effect']:+.2f}** 小时
-
-### 3. 分析
-{'替代效应占主导：劳动者在相对较低的工资水平下，更倾向于用劳动替代闲暇。' if results['total_effect'] > 0 else '收入效应占主导：劳动者在较高工资水平下更看重闲暇，符合向后弯曲的劳动供给曲线。'}
-"""
-
-results_pack = {
-    "analysis": analysis_text,
-    "reflection_questions": """
-1. 如果 β 增加（劳动者更重视闲暇），替代效应和收入效应的相对大小会如何变化？
-2. 现实中，为什么高收入人群的工作时间反而可能更长（如企业家、高管）？这与模型预测矛盾吗？
-3. 请用本次实验结果解释"最低工资提高"可能如何影响低技能劳动者的劳动供给。
-""",
-    "conclusion": f"本次实验验证了工资变动的双重效应：替代效应倾向增加劳动供给，收入效应倾向减少劳动供给。当前参数下，{'替代效应' if results['total_effect'] > 0 else '收入效应'}占据主导地位。"
-}
-
-report_text = generate_lab_report("labor_supply", params, results_pack)
-generate_report_download(report_text, "Labor_Supply")
-st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("</div>", unsafe_allow_html=True)
