@@ -80,8 +80,10 @@ with st.expander("📋 场景背景（点击展开）", expanded=False):
     - 🤖 **资本 K**：工业机器人 / AI 质检系统（每台年租金 r）
     - 👷 **劳动 L**：传统产业工人（每人年薪 w）
     
-    技术约束：产线遵循 **Cobb-Douglas 生产函数** $Q = K^{\alpha} \times L^{(1-\alpha)}$
-    
+    技术约束：产线遵循 **Cobb-Douglas 生产函数**
+    """)
+    st.latex(r"Q = K^{\alpha} \times L^{(1-\alpha)}")
+    st.markdown("""
     你将面对一个关键决策：当地政府出台了**稳岗补贴政策**（工人工资 w 下降 30%），
     这会对你的要素配置产生什么影响？背后有两股力量在博弈——
     
