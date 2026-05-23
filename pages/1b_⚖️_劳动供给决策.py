@@ -126,8 +126,8 @@ with col_ctrl:
     st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
     st.markdown("<div class='cyber-header'>🎛️ 参数注射器</div>", unsafe_allow_html=True)
     
-    w0 = st.slider("初始工资率 (w₀ 元/小时)", 5, 50, 15, key="w0")
-    w1 = st.slider("冲击后新工资率 (w₁ 元/小时)", w0, 100, w0 + 20, key="w1")
+    w0 = st.slider("初始工资率 (w₀ 元/小时)", 5, 100, 15, key="w0")
+    w1 = st.slider("冲击后新工资率 (w₁ 元/小时)", 5, 100, min(w0 + 20, 100), key="w1")
     V = st.slider("非劳动收入 (V 元/天)", 0, 500, 150, step=10, key="V",
                   help="如：基金分红、房屋租金、家人转账等不依赖劳动的每日收入")
     
