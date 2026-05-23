@@ -38,6 +38,9 @@ with st.sidebar:
     st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_market)
     st.divider()
     st.page_link("🏠_综合门户首页.py", label="🏠 返回门户", use_container_width=True)
+    st.divider()
+    st.markdown("##### 📎 深度模块")
+    st.page_link("pages/2b_🏗️_要素配置沙盘.py", label="🏗️ 要素配置沙盘 (替代vs规模效应) →", use_container_width=True)
 
 # ==========================================
 # 挑战模式

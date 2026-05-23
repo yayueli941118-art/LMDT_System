@@ -143,6 +143,7 @@ with col2:
             <span class="card-tag">Ch3 需求</span>
             <span class="card-tag">Ch4 均衡</span>
             <span class="card-tag">Ch8 薪酬</span>
+            <span class="card-tag" style="background:#ecfdf5; color:#059669; border:1px solid #10b981;">★ 替代vs规模效应</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
