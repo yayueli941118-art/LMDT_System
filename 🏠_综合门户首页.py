@@ -4,9 +4,6 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from shared import COLOR, SHARED_CSS, SCHOOL_NAME, DEPARTMENT, AUTHOR_NAME, COMPETITION_INFO
 
-# ==========================================
-# 1. 门户配置
-# ==========================================
 st.set_page_config(
     page_title="LMDT - 黎雅月老师教学平台",
     page_icon="🎓",
@@ -15,7 +12,7 @@ st.set_page_config(
 )
 
 # ==========================================
-# 2. 视觉样式
+# 视觉样式
 # ==========================================
 st.markdown("""
 <style>
@@ -33,64 +30,45 @@ st.markdown("""
         line-height: 1.7 !important;
     }
     h1 { font-size: 42px !important; font-weight: 900 !important; color: #1e3a8a !important; letter-spacing: 2px; }
-    h2 { font-size: 32px !important; font-weight: 800 !important; color: #1e40af !important; border-left: 8px solid #3b82f6; padding-left: 15px; }
-    h3 { font-size: 24px !important; font-weight: 700 !important; }
+    h2 { font-size: 28px !important; font-weight: 800 !important; color: #1e40af !important; border-left: 8px solid #3b82f6; padding-left: 15px; margin-top: 30px; }
+    h3 { font-size: 22px !important; font-weight: 700 !important; }
 
-    /* Banner */
     .school-banner {
         background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 100%);
-        padding: 30px;
-        border-radius: 15px;
-        color: white;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
+        padding: 30px; border-radius: 15px; color: white;
+        margin-bottom: 30px; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+        display: flex; flex-direction: row; align-items: center; justify-content: space-between;
     }
     .school-name { font-size: 22px; opacity: 0.9; font-weight: 400; letter-spacing: 1px; }
     .system-title { font-size: 48px; font-weight: 900; margin: 10px 0; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-    .author-badge { 
-        background-color: rgba(255,255,255,0.2); 
-        padding: 8px 15px; 
-        border-radius: 50px; 
-        font-size: 16px; 
-        border: 1px solid rgba(255,255,255,0.4);
+    .author-badge {
+        background-color: rgba(255,255,255,0.2); padding: 8px 15px;
+        border-radius: 50px; font-size: 16px; border: 1px solid rgba(255,255,255,0.4);
     }
-
-    /* 导航卡片 */
     .nav-card {
-        background-color: white;
-        padding: 25px;
-        border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        transition: all 0.3s ease;
-        height: 100%;
+        background-color: white; padding: 22px; border-radius: 12px;
+        border: 2px solid #e2e8f0; transition: all 0.3s ease; height: 100%;
     }
     .nav-card:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-        transform: translateY(-5px);
+        border-color: #3b82f6; box-shadow: 0 10px 30px rgba(0,0,0,0.08); transform: translateY(-4px);
     }
-    .card-icon { font-size: 40px; margin-bottom: 15px; display: block; }
-    .card-title { font-size: 24px; font-weight: 800; color: #1e3a8a; display: block; margin-bottom: 10px; }
-    .card-desc { font-size: 16px; color: #64748b; margin-bottom: 15px; }
-    .card-tag { 
-        display: inline-block; 
-        background: #eff6ff; 
-        color: #2563eb; 
-        padding: 4px 10px; 
-        border-radius: 4px; 
-        font-size: 14px; 
-        font-weight: bold; 
-        margin: 2px 4px;
+    .card-icon { font-size: 36px; margin-bottom: 10px; display: block; }
+    .card-title { font-size: 20px; font-weight: 800; color: #1e3a8a; display: block; margin-bottom: 8px; }
+    .card-desc { font-size: 15px; color: #64748b; margin-bottom: 12px; }
+    .card-tag {
+        display: inline-block; background: #eff6ff; color: #2563eb;
+        padding: 3px 9px; border-radius: 4px; font-size: 13px; font-weight: bold; margin: 2px 3px;
     }
+    .mini-card {
+        background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+        padding: 16px; margin-bottom: 10px; transition: all 0.2s;
+    }
+    .mini-card:hover { border-color: #3b82f6; transform: translateX(3px); }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. Banner
+# Banner
 # ==========================================
 st.markdown(f"""
 <div class="school-banner">
@@ -109,9 +87,9 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 4. 核心导航区
+# 三大核心实验室
 # ==========================================
-st.markdown("## 📍 请选择实验模块")
+st.markdown("## 📍 核心实验模块")
 
 col1, col2, col3 = st.columns(3)
 
@@ -121,13 +99,10 @@ with col1:
         <span class="card-icon">👤</span>
         <span class="card-title">个体职业实验室</span>
         <p class="card-desc">
-            模拟劳动者从求学、求职到流动的全生命周期。探索<b>人力资本投资</b>回报与<b>职业流动</b>决策。
+            明瑟收入方程 · 教育投资回报 · 盈亏平衡分析 · 中国工资基准对比
         </p>
-        <div style="margin-top:20px;">
-            <span class="card-tag">Ch1/2 供给</span>
-            <span class="card-tag">Ch5 人力资本</span>
-            <span class="card-tag">Ch6 流动</span>
-            <span class="card-tag" style="background:#f3e8ff; color:#7c3aed; border:1px solid #a78bfa;">★ 迁徙仿真</span>
+        <div style="margin-top:10px;">
+            <span class="card-tag">第四章 人力资本</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -138,13 +113,10 @@ with col2:
         <span class="card-icon">🏭</span>
         <span class="card-title">企业市场实验室</span>
         <p class="card-desc">
-            扮演企业管理者，进行<b>生产要素配置</b>与<b>薪酬制度设计</b>。体验CES派生需求与效率工资理论。
+            CES生产函数 · 边际生产力 · 条件要素需求 · 要素替代弹性 · 挑战模式
         </p>
-        <div style="margin-top:20px;">
-            <span class="card-tag">Ch3 需求</span>
-            <span class="card-tag">Ch4 均衡</span>
-            <span class="card-tag">Ch8 薪酬</span>
-            <span class="card-tag" style="background:#ecfdf5; color:#059669; border:1px solid #10b981;">★ 替代vs规模效应</span>
+        <div style="margin-top:10px;">
+            <span class="card-tag">第三章 劳动力需求</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -155,53 +127,105 @@ with col3:
         <span class="card-icon">🌍</span>
         <span class="card-title">宏观政策实验室</span>
         <p class="card-desc">
-            扮演政策制定者，应对<b>AI技术冲击</b>，诊断<b>结构性失业</b>，制定干预政策。
+            贝弗里奇曲线 · 新质生产力 · 乡村振兴 · 结构性失业 · 财政/货币政策沙盘
         </p>
-        <div style="margin-top:20px;">
-            <span class="card-tag">Ch9 失业</span>
-            <span class="card-tag">AI 冲击</span>
-            <span class="card-tag">政策沙盘</span>
+        <div style="margin-top:10px;">
+            <span class="card-tag">第八章 失业</span>
+            <span class="card-tag">宏观政策</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# 新增模块：劳动供给决策
-st.markdown("---")
-st.markdown("## 🆕 深度教学模块")
+# ==========================================
+# 八大深度教学专题
+# ==========================================
+st.markdown("## 🔬 深度教学专题（按教材章节）")
 
-col4, col5 = st.columns([1, 2])
+row1_col1, row1_col2, row1_col3 = st.columns(3)
 
-with col4:
+with row1_col1:
     st.markdown("""
-    <div class="nav-card" style="border-color: #8b5cf6;">
-        <span class="card-icon">⚖️</span>
-        <span class="card-title">劳动供给决策实验室</span>
-        <p class="card-desc">
-            <b>收入效应 vs 替代效应</b>分步分解。解决劳动经济学中最抽象的概念——向后弯曲的劳动供给曲线。
+    <div class="mini-card" style="border-left: 4px solid #06b6d4;">
+        <strong style="font-size:16px;">⚖️ 第二章 劳动供给决策</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            收入效应 vs 替代效应 · Cobb-Douglas 效用 · 连续进度滑块 · 希克斯补偿
         </p>
-        <div style="margin-top:20px;">
-            <span class="card-tag">Ch2 供给决策</span>
-            <span class="card-tag">收入/替代效应</span>
-            <span class="card-tag">★ 国赛亮点</span>
-        </div>
     </div>
     """, unsafe_allow_html=True)
 
-with col5:
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #ede9fe 0%, #f3e8ff 100%); border: 1px solid #8b5cf6; border-radius: 12px; padding: 25px; height: 100%;">
-        <h4 style="color:#5b21b6;">💡 为什么这个模块重要？</h4>
-        <p style="font-size:16px; color:#4c1d95;">
-            当工资上涨时，人们是更愿意工作还是更想休息？<br>
-            这取决于<strong>替代效应</strong>（闲暇变贵→多工作）与<strong>收入效应</strong>（睡后收入够花→少工作）的博弈。<br><br>
-            本模块通过<strong>三步可视化分解</strong>（初始均衡 → 替代效应 → 收入效应），
-            让抽象的微观经济学概念变得触手可及。
+with row1_col2:
+    st.markdown("""
+    <div class="mini-card" style="border-left: 4px solid #06b6d4;">
+        <strong style="font-size:16px;">🏗️ 第三章 要素配置沙盘</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            替代效应 vs 规模效应 · Cobb-Douglas 生产 · 等成本线旋转 · 稳岗补贴模拟
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with row1_col3:
+    st.markdown("""
+    <div class="mini-card" style="border-left: 4px solid #8b5cf6;">
+        <strong style="font-size:16px;">✈️ 第五章 劳动力流动</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            迁徙决策 NPV · 户籍制度壁垒 · 人才引进补贴 · 三种人生情景对比
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+row2_col1, row2_col2, row2_col3 = st.columns(3)
+
+with row2_col1:
+    st.markdown("""
+    <div class="mini-card" style="border-left: 4px solid #f59e0b;">
+        <strong style="font-size:16px;">💰 第六章 工资决定与收入差距</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            补偿性工资差异 · 效率工资 (NSC) · 最低工资权衡 · 洛伦兹曲线 · 技能溢价
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with row2_col2:
+    st.markdown("""
+    <div class="mini-card" style="border-left: 4px solid #ef4444;">
+        <strong style="font-size:16px;">🚫 第七章 劳动力市场歧视</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            贝克尔偏见模型 · 统计性歧视螺旋 · 中国四维歧视 · 政策组合实验
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with row2_col3:
+    st.markdown("""
+    <div class="mini-card" style="border-left: 4px solid #6366f1;">
+        <strong style="font-size:16px;">📉 第八章 失业经济学</strong>
+        <p style="font-size:14px; color:#475569; margin:4px 0;">
+            失业类型诊断 · 职业搜寻 (保留工资) · 贝弗里奇曲线 · 自然失业率
         </p>
     </div>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 底部信息
+# 教材覆盖矩阵
+# ==========================================
+st.markdown("---")
+st.markdown("## 📊 教材全覆盖 · 八章对应矩阵")
+
+st.markdown("""
+| 教材章节 | 核心内容 | 仿真页面 | 色系 |
+|---------|---------|---------|------|
+| 第一章 | 劳动力市场导论 | 🏠 门户首页（概念框架） | — |
+| 第二章 | 劳动力供给分析 | ⚖️ 劳动供给决策 → `1b` | 青 |
+| 第三章 | 劳动力需求分析 | 🏭 企业实验室 → `2` + 🏗️ 要素配置沙盘 → `2b` | 青 |
+| 第四章 | 人力资本投资 | 👤 个体实验室 → `1` | 蓝 |
+| 第五章 | 劳动力流动 | ✈️ 迁移决策仿真 → `1c` | 紫 |
+| 第六章 | 工资决定与收入差距 | 💰 工资决定与收入差距 → `1e` | 金 |
+| 第七章 | 劳动力市场歧视 | 🚫 歧视经济学实验 → `1d` | 红 |
+| 第八章 | 失业 | 📉 失业经济学 → `1f` + 🌍 宏观政策 → `3` | 靛 |
+""")
+
+# ==========================================
+# 版底
 # ==========================================
 st.markdown("---")
 st.markdown("""
@@ -210,20 +234,31 @@ st.markdown("""
     <p>本平台旨在通过<b>数字孪生技术</b>，将抽象的经济学模型转化为可视化、可交互的实验场景。</p>
     <p>让 HR 专业的学生从"死记硬背公式"转向"理解市场逻辑"，培养数据洞察力与决策思维。</p>
     <p style="font-size:14px; margin-top:20px; opacity:0.6;">
-        🇨🇳 融入「新质生产力」「乡村振兴」等国家战略 · 体现课程思政与时代热点
+        11 个交互式实验模块 · 8 章教材全覆盖 · 🇨🇳 融入「新质生产力」「乡村振兴」「共同富裕」等国家战略
     </p>
 </div>
 """, unsafe_allow_html=True)
 
+# ==========================================
 # 侧边栏
+# ==========================================
 with st.sidebar:
     st.image("https://img.icons8.com/fluency/96/teacher.png", width=80)
-    st.markdown(f"### 👩‍🏫 课程负责人：{AUTHOR_NAME}")
+    st.markdown(f"### 👩‍🏫 {AUTHOR_NAME}")
     st.info(f"**{SCHOOL_NAME}**\n\n人力资源管理专业核心课\n《劳动经济学》教学团队")
     st.divider()
     st.markdown("#### 🔗 快捷入口")
-    st.page_link("pages/📈_教师看板.py", label="📈 教师看板 →", use_container_width=True)
+    st.page_link("pages/📈_教师看板.py", label="📈 教师看板 →")
     st.divider()
-    st.markdown("#### 📌 平台版本")
+    st.markdown("#### 🎯 教材章节总览")
+    st.caption("第一章 导论 → 🏠 首页")
+    st.caption("第二章 供给 → ⚖️ 劳动供给决策")
+    st.caption("第三章 需求 → 🏭 企业 + 🏗️ 要素配置")
+    st.caption("第四章 人力资本 → 👤 个体实验室")
+    st.caption("第五章 流动 → ✈️ 迁移决策")
+    st.caption("第六章 工资 → 💰 工资与差距")
+    st.caption("第七章 歧视 → 🚫 歧视实验")
+    st.caption("第八章 失业 → 📉 + 🌍")
+    st.divider()
     st.caption("v2.0 · 国赛优化版")
-    st.caption("2025.05 · 第七届全国高校教师技能创新大赛")
+    st.caption("2026.05 · 教材全覆盖")
