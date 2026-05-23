@@ -113,11 +113,13 @@ def render_predict_verify(question: str, options: list, correct_answer: str, var
     if not st.session_state[done_key]:
         st.markdown('<div class="predict-box">', unsafe_allow_html=True)
         st.markdown(f"##### 🔮 先预测：{question}")
-        user_answer = st.radio("请选择你的预测：", options, key=predict_key)
-        if st.button("✅ 确认预测，开始实验", key=f"{var_name}_confirm"):
-            st.session_state[answer_key] = user_answer
+        st.radio("请选择你的预测：", options, key=predict_key)
+        
+        def _confirm_predict():
+            st.session_state[answer_key] = st.session_state[predict_key]
             st.session_state[done_key] = True
-            st.rerun()
+        
+        st.button("✅ 确认预测，开始实验", key=f"{var_name}_confirm", on_click=_confirm_predict)
         st.markdown('</div>', unsafe_allow_html=True)
         return False, False, None
     else:

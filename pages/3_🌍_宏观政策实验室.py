@@ -28,11 +28,13 @@ render_page_banner("🌍", "宏观政策实验室", "Macro Lab", "purple")
 # ==========================================
 with st.sidebar:
     st.header("⚙️ 全局设置")
-    if st.button("🔄 重置所有参数", use_container_width=True):
+    
+    def _reset_macro():
         for key in list(st.session_state.keys()):
             if key.startswith(("ai_", "mis_", "pol_", "macro_")):
                 del st.session_state[key]
-        st.rerun()
+    
+    st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_macro)
     st.divider()
     st.markdown("##### 🏛️ 政策百科")
     st.info("""

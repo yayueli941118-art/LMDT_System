@@ -29,11 +29,13 @@ with st.sidebar:
     st.header("⚙️ 全局设置")
     use_ces = st.toggle("🧪 启用CES高级模型", value=False,
                         help="关闭使用简单反比模型，开启使用CES（替代弹性可调）")
-    if st.button("🔄 重置所有参数", use_container_width=True):
+    
+    def _reset_market():
         for key in list(st.session_state.keys()):
             if key.startswith(("cap_", "price_", "tech_", "sigma_", "pay_", "market_")):
                 del st.session_state[key]
-        st.rerun()
+    
+    st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_market)
     st.divider()
     st.page_link("🏠_综合门户首页.py", label="🏠 返回门户", use_container_width=True)
 

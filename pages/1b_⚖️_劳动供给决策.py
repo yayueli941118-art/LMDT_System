@@ -68,19 +68,22 @@ with col3:
                       help="β=0.5表示闲暇与消费同等重要；β>0.5表示更重视闲暇")
 with col4:
     st.markdown("##### 📊 情景预设")
+    
+    def _preset_rise():
+        st.session_state.wage_init = 20
+        st.session_state.wage_new_slider = 40
+        st.session_state.beta_slider = 0.5
+    
+    def _preset_fall():
+        st.session_state.wage_init = 80
+        st.session_state.wage_new_slider = 40
+        st.session_state.beta_slider = 0.5
+    
     col4a, col4b = st.columns(2)
     with col4a:
-        if st.button("💰 低工资→高工资", use_container_width=True, key="preset_rise"):
-            st.session_state.wage_init = 20
-            st.session_state.wage_new_slider = 40
-            st.session_state.beta_slider = 0.5
-            st.rerun()
+        st.button("💰 低工资→高工资", use_container_width=True, key="preset_rise", on_click=_preset_rise)
     with col4b:
-        if st.button("📉 高工资→低工资", use_container_width=True, key="preset_fall"):
-            st.session_state.wage_init = 80
-            st.session_state.wage_new_slider = 40
-            st.session_state.beta_slider = 0.5
-            st.rerun()
+        st.button("📉 高工资→低工资", use_container_width=True, key="preset_fall", on_click=_preset_fall)
 
 st.markdown('</div>', unsafe_allow_html=True)
 

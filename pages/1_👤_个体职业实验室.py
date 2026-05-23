@@ -33,11 +33,13 @@ render_page_banner("👤", "个体职业发展实验室", "Micro Lab", "blue")
 with st.sidebar:
     st.header("⚙️ 全局设置")
     st.caption("核心实验参数已移至图表旁，此处为辅助功能")
-    if st.button("🔄 重置所有参数", use_container_width=True):
+    
+    def _reset_micro():
         for key in list(st.session_state.keys()):
             if key.startswith(("edu_", "gen_", "spec_", "disc_", "wdiff_", "cmove_", "cpsych_", "rural_", "micro_")):
                 del st.session_state[key]
-        st.rerun()
+    
+    st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_micro)
     st.divider()
     st.markdown("##### 📎 快捷入口")
     st.page_link("pages/1b_⚖️_劳动供给决策.py", label="⚖️ 收入/替代效应分解 →", use_container_width=True)
