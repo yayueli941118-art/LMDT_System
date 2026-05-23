@@ -2,7 +2,7 @@ import streamlit as st
 import sys, os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from shared import COLOR, SHARED_CSS, SCHOOL_NAME, DEPARTMENT, AUTHOR_NAME, COMPETITION_INFO
+from shared import COLOR, SHARED_CSS, SCHOOL_NAME, DEPARTMENT, AUTHOR_NAME
 
 st.set_page_config(
     page_title="LMDT - 黎雅月老师教学平台",
@@ -81,7 +81,7 @@ st.markdown(f"""
     </div>
     <div style="text-align: right;">
         <div class="author-badge">👩‍🏫 课程负责人：{AUTHOR_NAME}</div>
-        <div style="margin-top:10px; font-size:14px; opacity:0.8;">{COMPETITION_INFO}</div>
+        <div style="margin-top:10px; font-size:14px; opacity:0.8;">《劳动经济学》核心课程教学平台</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -260,5 +260,5 @@ with st.sidebar:
     st.caption("第七章 歧视 → 🚫 歧视实验")
     st.caption("第八章 失业 → 📉 + 🌍")
     st.divider()
-    st.caption("v2.0 · 国赛优化版")
+    st.caption("v2.0 · 教材全覆盖教学版")
     st.caption("2026.05 · 教材全覆盖")

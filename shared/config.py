@@ -5,7 +5,7 @@
 SCHOOL_NAME = "西南交通大学希望学院"
 DEPARTMENT = "商学院"
 AUTHOR_NAME = "黎雅月"
-COMPETITION_INFO = "第七届全国高校教师技能创新大赛参赛作品"
+COMPETITION_INFO = "《劳动经济学》核心课程教学平台"
 
 DATA_SOURCES = {
     "wage_2024": "数据来源：国家统计局《2024年中国统计年鉴》",

@@ -1,6 +1,6 @@
 """
 劳动供给决策实验室 — 收入效应 vs 替代效应分步拆解
-教学竞赛级：脚手架式探究 (Learning Scaffolding) + Cobb-Douglas 精确解算
+脚手架式探究 (Learning Scaffolding) + Cobb-Douglas 精确解算
 """
 
 import streamlit as st
