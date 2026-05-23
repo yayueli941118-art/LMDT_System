@@ -1,4 +1,4 @@
-from .styles import SHARED_CSS, COLOR, CARD_CSS, PAGE_BANNER_CSS
+from .styles import SHARED_CSS, COLOR, CARD_CSS, PAGE_BANNER_CSS, get_lab_css
 from .config import SCHOOL_NAME, DEPARTMENT, AUTHOR_NAME, COMPETITION_INFO, DATA_SOURCES
 from .data import (
     CHINA_WAGE_BY_EDU_2024,
@@ -21,5 +21,6 @@ from .components import (
     render_metric_card,
     render_challenge_banner,
     render_predict_verify,
+    render_policy_tag,
 )
 from .reports import generate_lab_report, generate_report_download
