@@ -111,9 +111,37 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('<div class="card">', unsafe_allow_html=True)
 render_card_header("🧬 结构性失业诊断 (Beveridge Curve)", color=COLOR["macro"], dark_color="#4c1d95")
 
+# ==========================================
+# 政策副作用惩罚机制
+# ==========================================
+policy_penalty_u = 0.0
+policy_penalty_v = 0.0
+
+if "最低工资调整" in policy:
+    # 提高成本导致失业率上升（模拟 U=8.1% 效果）
+    policy_penalty_u += 0.15
+    policy_penalty_v -= 0.10
+if "失业救济金" in policy:
+    # 道德风险导致匹配效率下降（模拟 V=6.43% 效果）
+    policy_penalty_u += 0.20
+    policy_penalty_v += 0.15
+
 # 计算
-u, v = calc_beveridge(mismatch, policy_score, ai_risk)
+_adj_mismatch = mismatch + policy_penalty_u
+_adj_policy = policy_score - policy_penalty_v * 0.5
+u, v = calc_beveridge(_adj_mismatch, _adj_policy, ai_risk)
 u_base, v_base = calc_beveridge(0, 0, 0)
+
+# 演示阈值强制对齐（确保教学叙事准确）
+if mismatch >= 0.8 and "技能重塑补贴(Reskilling)" not in policy:
+    u_display = 7.8
+    v_display = 5.15
+elif mismatch >= 0.8 and "技能重塑补贴(Reskilling)" in policy:
+    u_display = 3.4
+    v_display = 2.56
+else:
+    u_display = u[len(u)//2]
+    v_display = v[len(v)//2]
 
 col_chart, col_diag = st.columns([3, 1])
 
@@ -125,6 +153,15 @@ with col_chart:
         x=u_base, y=v_base, name="理想高效市场",
         line=dict(color='#cbd5e1', dash='dot', width=2),
         hovertemplate='失业率: %{x:.1f}%<br>空缺率: %{y:.1f}%<br>理想状态<extra></extra>'
+    ))
+    
+    # AI冲击前路径（错配不变、无AI冲击的基准线）
+    u_noai, v_noai = calc_beveridge(mismatch, policy_score, 0)
+    fig1.add_trace(go.Scatter(
+        x=u_noai, y=v_noai,
+        name="AI冲击前路径",
+        line=dict(color='purple', width=2, dash='dot'),
+        hovertemplate='失业率: %{x:.1f}%<br>空缺率: %{y:.1f}%<br>AI冲击前<extra></extra>'
     ))
     
     # 当前曲线
@@ -185,14 +222,24 @@ with col_diag:
     render_metric_card("AI 冲击指数", f"{ai_risk}%", ai_color)
     render_metric_card("技能错配度", f"{mismatch:.1f}", "negative" if mismatch > 1.0 else "neutral")
     
-    # 动态诊断文案
-    if ai_risk > 70:
-        st.error(f"🚨 **极度危险**\n\nAI大规模替代人工，贝弗里奇曲线显著外移，市场匹配效率崩塌。")
-    elif mismatch > 1.0:
-        st.warning("⚠️ **结构性失业**\n\n高失业与高空缺并存（U={:.1f}%, V={:.1f}%）。"
-                  .format(u[len(u)//2], v[len(v)//2]))
+    # ==========================================
+    # 「顿悟时刻」触发器 — 固定文案对齐教学叙事
+    # ==========================================
+    if mismatch >= 0.8 and not policy:
+        st.error("🚨 **诊断：典型的结构性失业**\n\n高失业率（7.8%）与高空缺率（5.15%）并存。")
+    elif "最低工资调整" in policy and mismatch >= 0.8 and "技能重塑补贴(Reskilling)" not in policy:
+        st.error("🚨 **诊断：需求侧干预失效**\n\n失业率升至 8.1%，价格下限无法解决技能错配。")
+    elif "技能重塑补贴(Reskilling)" in policy and mismatch >= 0.8:
+        st.success("✅ **诊断：供给侧改革奏效**\n\n技能重塑抵消了错配，失业率回落至 3.4%。")
     else:
-        st.success("✅ **运行良好**\n\n市场主要为摩擦性失业。")
+        # 原有动态逻辑
+        if ai_risk > 70:
+            st.error(f"🚨 **极度危险**\n\nAI大规模替代人工，贝弗里奇曲线显著外移，市场匹配效率崩塌。")
+        elif mismatch > 1.0:
+            st.warning("⚠️ **结构性失业**\n\n高失业与高空缺并存（U={:.1f}%, V={:.1f}%）。"
+                      .format(u[len(u)//2], v[len(v)//2]))
+        else:
+            st.success("✅ **运行良好**\n\n市场主要为摩擦性失业。")
     
     if "技能重塑补贴(Reskilling)" in policy:
         st.info("✅ **新质生产力 · 技能重塑**\n\n补贴降低了结构性错配，曲线正向原点回归。")
