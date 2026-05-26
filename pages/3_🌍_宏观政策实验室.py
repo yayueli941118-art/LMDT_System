@@ -186,6 +186,16 @@ with col_chart:
         )
     ))
     
+    # 外移方向标注：让评委一眼看出曲线右上方移动
+    if ai_risk >= 30:
+        fig1.add_annotation(
+            x=5.5, y=10,
+            text="↗ 结构性失业加剧（U-V 外移）",
+            showarrow=True, arrowhead=2,
+            ax=50, ay=-50,
+            font=dict(color="#dc2626", size=14)
+        )
+
     # AI冲击极端的警告
     if ai_risk > 80:
         fig1.add_annotation(
