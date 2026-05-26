@@ -147,45 +147,49 @@ col_chart, col_diag = st.columns([3, 1])
 
 with col_chart:
     fig1 = go.Figure()
-    
-    # 理想曲线
+
+    # 1. 理想曲线（灰色虚线）
     fig1.add_trace(go.Scatter(
         x=u_base, y=v_base, name="理想高效市场",
         line=dict(color='#cbd5e1', dash='dot', width=2),
-        hovertemplate='失业率: %{x:.1f}%<br>空缺率: %{y:.1f}%<br>理想状态<extra></extra>'
+        hoverinfo='skip'
     ))
-    
-    # AI冲击前路径（错配不变、无AI冲击的基准线）
+
+    # 2. AI冲击前路径（紫色虚线，对比底色）
     u_noai, v_noai = calc_beveridge(mismatch, policy_score, 0)
     fig1.add_trace(go.Scatter(
-        x=u_noai, y=v_noai,
-        name="AI冲击前路径",
+        x=u_noai, y=v_noai, name="AI冲击前路径",
         line=dict(color='purple', width=2, dash='dot'),
-        hovertemplate='失业率: %{x:.1f}%<br>空缺率: %{y:.1f}%<br>AI冲击前<extra></extra>'
+        hoverinfo='skip'
     ))
-    
-    # 当前曲线
+
+    # 3. 当前实时曲线
     fig1.add_trace(go.Scatter(
         x=u, y=v, name="当前市场状态",
         line=dict(color=COLOR["macro"], width=5),
-        hovertemplate='<b>失业率: %{x:.1f}%</b><br>空缺率: %{y:.1f}%<br>💡 当前市场匹配效率<extra></extra>'
+        hovertemplate='<b>失业率: %{x:.1f}%</b><br>空缺率: %{y:.1f}%<extra></extra>'
     ))
-    
-    # 中国真实数据基准点
+
+    # 4. 动态当前决策点（红点随滑块实时移动！）
+    current_u = u[len(u)//2]
+    current_v = v[len(v)//2]
+    fig1.add_trace(go.Scatter(
+        x=[current_u], y=[current_v],
+        mode='markers+text',
+        name='当前决策点',
+        marker=dict(size=14, color='red', line=dict(width=2, color='white')),
+        text=["当前状态"],
+        textposition="top center"
+    ))
+
+    # 5. 中国数据基准点
     fig1.add_trace(go.Scatter(
         x=[CHINA_BEVERIDGE_BASELINE["urban_unemployment"]],
         y=[CHINA_BEVERIDGE_BASELINE["job_vacancy_ratio"]],
-        mode='markers',
-        name='中国2024年实际数据',
-        marker=dict(size=16, color=COLOR["success"], symbol='star', line=dict(width=2, color='white')),
-        hovertemplate=(
-            f'<b>🇨🇳 中国2024年</b><br>'
-            f'城镇调查失业率: {CHINA_BEVERIDGE_BASELINE["urban_unemployment"]}%<br>'
-            f'求人倍率: {CHINA_BEVERIDGE_BASELINE["job_vacancy_ratio"]}<br>'
-            f'<extra></extra>'
-        )
+        mode='markers', name='中国2024年实际',
+        marker=dict(size=12, color=COLOR["success"], symbol='star')
     ))
-    
+
     # 外移方向标注：让评委一眼看出曲线右上方移动
     if ai_risk >= 30:
         fig1.add_annotation(
@@ -211,15 +215,15 @@ with col_chart:
             showarrow=True, arrowhead=2, ax=0, ay=-30,
             font=dict(color=COLOR["warning"], size=12)
         )
-    
+
     fig1.update_layout(
-        xaxis_title="失业率 U (%)",
-        yaxis_title="职位空缺率 V (%)",
+        xaxis_title="失业率 U (%)", yaxis_title="职位空缺率 V (%)",
         template="plotly_white", height=450,
         margin=dict(l=20, r=20, t=10, b=20),
         yaxis=dict(range=[0, 35]),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02),
-        hovermode='x unified'
+        xaxis=dict(range=[0, 15]),  # 锁定横坐标，防止缩放导致位移视觉不准
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02)
     )
     st.plotly_chart(fig1, use_container_width=True)
     
