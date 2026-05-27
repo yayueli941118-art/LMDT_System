@@ -1,6 +1,6 @@
 """
 ✈️ 职场迁徙决策仿真 — 第五章 劳动力流动
-NPV动态累积+制度壁垒+中国政策杠杆+情景对比
+NPV动态累积+制度壁垒+中国政策杠杆+情景对比+双线竞速可视化
 """
 
 import streamlit as st
@@ -160,8 +160,7 @@ with col_ctrl:
     cost_rent = st.slider("额外房租/年 (k)", 0, 80, 36, 5, key="cost_rent",
                          help="城市房租减去家乡住房成本")
     cost_living = st.slider("额外生活开销/年 (k)", 0, 40, 12, 2, key="cost_living",
-                           help="餐饮/交通/社交等城市溢价")
-    annual_net = (w_city - w_home) * 12 - cost_rent - cost_living
+                            help="餐饮/交通/社交等城市溢价")
     
     st.markdown("---")
     st.markdown("**🚧 制度壁垒（中国特色）**")
@@ -198,77 +197,93 @@ with col_ctrl:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# NPV 计算
+# NPV 计算 (双线累积竞速模型)
 # ==========================================
 t_vec = np.arange(1, remain_years + 1)
-
-# 每年净收益 = 工资差 × 12 - 生活成本溢价 - 户籍等效成本
-annual_benefit = (w_city - w_home) * 12 - cost_rent - cost_living - hukou_cost
-net_flow = np.full(remain_years, annual_benefit)
-# 第一年有一次性搬迁补贴（抵扣一次性搬迁成本）
-net_flow[0] += talent_subsidy  # 补贴/安家费在第一年计入
-
 discount_rate = 0.05
-cum_npv = np.cumsum(net_flow / ((1 + discount_rate) ** t_vec))
 
-# 判断
+# 1. 留在家乡的资产累积
+annual_home = w_home * 12
+flow_home = np.full(remain_years, annual_home)
+cum_home = np.cumsum(flow_home / ((1 + discount_rate) ** t_vec))
+
+# 2. 迁徙到大城市的资产累积
+annual_benefit = (w_city - w_home) * 12 - cost_rent - cost_living - hukou_cost
+annual_city_net = w_city * 12 - cost_rent - cost_living - hukou_cost
+flow_city = np.full(remain_years, annual_city_net)
+flow_city[0] += talent_subsidy  # 第一年拿补贴/安家费
+cum_city = np.cumsum(flow_city / ((1 + discount_rate) ** t_vec))
+
+# 3. 计算差距与盈亏平衡点 (NPV 本质上就是这两条线的差值)
+cum_npv = cum_city - cum_home
 final_npv = cum_npv[-1]
-breakeven_arr = np.where(cum_npv > 0)[0]
-breakeven_year = breakeven_arr[0] + 1 if len(breakeven_arr) > 0 else None
+
+# 判断哪一年大城市的累计财富 > 家乡的累计财富
+breakeven_arr = np.where(cum_city > cum_home)[0]
+if len(breakeven_arr) > 0 and final_npv > 0:
+    breakeven_year = breakeven_arr[0] + 1
+else:
+    breakeven_year = None
 
 # ==========================================
-# Plotly 可视化
+# Plotly 可视化 (双线竞速图)
 # ==========================================
 fig = go.Figure()
 
-# NPV 累积面积
-colors_bar = ['#ef4444' if v < 0 else '#10b981' for v in cum_npv]
-fig.add_trace(go.Bar(
-    x=t_vec, y=cum_npv, marker_color=colors_bar,
-    name="累计 NPV",
-    hovertemplate=(
-        '第%{x}年<br>'
-        '累计NPV: %{y:+.1f}k<br>'
-        '%{customdata}'
-        '<extra></extra>'
-    ),
-    customdata=[f'{"✅ 已回本！" if v > 0 else "⏳ 尚未回本"}' for v in cum_npv]
+# 线条 A：留在家乡轨迹 (平缓基准线)
+fig.add_trace(go.Scatter(
+    x=t_vec, y=cum_home,
+    mode='lines',
+    name='🏡 留在家乡累计财富',
+    line=dict(color='#94a3b8', width=3, dash='dash'),
+    hovertemplate='第%{x}年<br>家乡累计: %{y:.1f}k<extra></extra>'
 ))
 
-# 零线
-fig.add_hline(y=0, line_dash="solid", line_color="#64748b", line_width=1)
+# 线条 B：迁徙大城市轨迹
+fig.add_trace(go.Scatter(
+    x=t_vec, y=cum_city,
+    mode='lines',
+    name='🏙️ 迁徙大城市累计财富',
+    line=dict(color='#a855f7', width=4),
+    fill='tonexty', # 核心魔法：填充两条线之间的差值区域
+    fillcolor='rgba(16, 185, 129, 0.15)' if final_npv > 0 else 'rgba(239, 68, 68, 0.15)',
+    hovertemplate='第%{x}年<br>城市累计: %{y:.1f}k<extra></extra>'
+))
 
-# 盈亏平衡标注
-if breakeven_year:
-    fig.add_vline(
-        x=breakeven_year, line_dash="dash", line_color="#10b981", line_width=2,
-        annotation_text=f"📌 回本！第 {breakeven_year} 年",
-        annotation_font=dict(size=14, color="#10b981"),
-        annotation_position="top"
-    )
-    fig.add_trace(go.Scatter(
-        x=[breakeven_year], y=[cum_npv[breakeven_year - 1]],
-        mode='markers', name='盈亏平衡点',
-        marker=dict(size=16, color='#10b981', symbol='star', line=dict(width=3, color='white')),
-        hovertemplate=f'<b>🌟 盈亏平衡</b><br>第 {breakeven_year} 年<br>NPV={cum_npv[breakeven_year-1]:.1f}k<extra></extra>'
-    ))
+# 标注盈亏平衡交叉点
+if breakeven_year and breakeven_year <= remain_years:
+    fig.add_vline(x=breakeven_year, line_dash="dot", line_color="#10b981", opacity=0.6)
+    # 如果不是第一年就直接碾压，则标出明显的交叉点
+    if breakeven_year > 1:
+        fig.add_trace(go.Scatter(
+            x=[breakeven_year], y=[cum_city[breakeven_year - 1]],
+            mode='markers+text', name='🌟 回本交叉点',
+            marker=dict(size=14, color='#10b981', line=dict(width=3, color='white')),
+            text=["命运交叉点 (反超)"], textposition="top left",
+            textfont=dict(color="#10b981", size=13, weight="bold"),
+            hovertemplate=f'<b>交叉反超</b><br>第 {breakeven_year} 年城市财富超过家乡<extra></extra>'
+        ))
 
-# 注释框
+# 尾部最终财富差距标注
 fig.add_annotation(
-    x=remain_years * 0.7, y=final_npv * 0.85 if final_npv > 0 else final_npv * 0.5,
-    text=f"最终 NPV: <b>{final_npv:+.0f}k</b>",
+    x=remain_years, y=(cum_city[-1] + cum_home[-1]) / 2,
+    text=f"最终差距 (NPV):<br><b>{final_npv:+.0f}k</b>",
     showarrow=False,
-    font=dict(size=18, color="#10b981" if final_npv > 0 else "#ef4444"),
-    bgcolor="rgba(0,0,0,0.7)", borderpad=8
+    bgcolor="rgba(16, 185, 129, 0.9)" if final_npv > 0 else "rgba(239, 68, 68, 0.9)",
+    font=dict(color="white", size=13),
+    borderpad=6, bordercolor="white", borderwidth=1
 )
 
 fig.update_layout(
-    xaxis_title="年份", yaxis_title="累计净现值 NPV (k)",
+    title="双城记：留守 vs 迁徙的财富累积竞速",
+    title_font=dict(size=16, color="#e2e8f0"),
+    xaxis_title="年份 (年)", yaxis_title="累计折现财富 (k)",
     xaxis=dict(dtick=5, gridcolor="rgba(51, 65, 85, 0.3)"),
     yaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
+    template="plotly_dark", 
     paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
     font=dict(color="#e2e8f0", size=13),
-    height=430, margin=dict(l=40, r=20, t=20, b=40),
+    height=450, margin=dict(l=40, r=40, t=50, b=40),
     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
     hovermode='x unified'
 )
