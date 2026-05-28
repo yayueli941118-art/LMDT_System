@@ -9,83 +9,18 @@ import plotly.graph_objects as go
 import sys, os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from shared import SCHOOL_NAME, AUTHOR_NAME
+from shared import COLOR, SHARED_CSS, SCHOOL_NAME, AUTHOR_NAME, render_page_banner
 
 st.set_page_config(page_title="歧视经济学实验", page_icon="🚫", layout="wide")
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
-# ==========================================
-# 赛博暗色 UI（红色系——歧视的警示色调）
-# ==========================================
-st.markdown("""
-<style>
-    .stApp { background-color: #0b0f19 !important; }
-    section[data-testid="stSidebar"] {
-        background-color: #090d16 !important;
-        border-right: 1px solid rgba(239, 68, 68, 0.1) !important;
-    }
-    .stApp, .stApp p, .stApp span, .stApp div,
-    .stApp li, .stApp strong, .stApp b,
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-    div[data-testid="stMarkdownContainer"],
-    div[data-testid="stMarkdownContainer"] * {
-        color: #e2e8f0 !important;
-    }
-    .stMarkdown table th, .stMarkdown table td {
-        border-color: rgba(148, 163, 184, 0.3) !important; color: #cbd5e1 !important;
-    }
-    section[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-    div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
-        color: #f87171 !important; font-weight: 600 !important;
-    }
-    .tech-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-        border: 1px solid rgba(239, 68, 68, 0.15) !important;
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 12px; padding: 24px; margin-bottom: 24px;
-    }
-    .cyber-header {
-        font-size: 20px; font-weight: 700; color: #ffffff !important;
-        margin-bottom: 20px; display: flex; align-items: center;
-    }
-    .cyber-header::before {
-        content: ''; display: inline-block; width: 6px; height: 24px;
-        background: #ef4444; margin-right: 12px; border-radius: 3px;
-        box-shadow: 0 0 8px #ef4444;
-    }
-    .alert-red {
-        background: linear-gradient(135deg, rgba(185, 28, 28, 0.3) 0%, rgba(127, 29, 29, 0.1) 100%);
-        border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 16px; margin: 12px 0;
-    }
-    .reform-green {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
-        border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 16px; margin: 12px 0;
-    }
-    .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
-    header {visibility: hidden;} #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# Banner
-# ==========================================
-st.markdown(f"""
-<div style="margin-bottom: 20px;">
-    <h1 style="color: #ffffff; font-weight: 900; margin-bottom: 5px;">🚫 劳动力市场歧视经济学实验</h1>
-    <h4 style="color: #f87171; font-weight: 600; letter-spacing: 1px;">
-        第六章 劳动力市场歧视 — 同样的能力，不同的价格
-    </h4>
-    <p style="color: #64748b; font-size: 14px; margin-top: 4px;">
-        {SCHOOL_NAME} · 课程负责人：{AUTHOR_NAME} | Becker 偏好歧视模型 + 统计性歧视 + 拥挤假说
-    </p>
-</div>
-""", unsafe_allow_html=True)
+render_page_banner("🚫", "劳动力市场歧视经济学实验", "第六章 · Becker模型 + 统计性歧视", "red")
 
 # ==========================================
 # 预测脚手架
 # ==========================================
 if "disc_pred_done" not in st.session_state:
-    st.markdown("<div class='tech-card' style='border-color: rgba(239, 68, 68, 0.3) !important;'>", unsafe_allow_html=True)
+    st.markdown("<div class='card' style='border: 2px solid #ef4444;'>", unsafe_allow_html=True)
     st.markdown("##### 🔮 先判断：歧视能在市场中长期存在吗？")
     pred_d = st.radio(
         "**根据新古典经济学，如果雇主因为个人偏见歧视某一群体——**",
@@ -142,8 +77,8 @@ with tab1:
     col_ctrl, col_graph = st.columns([1, 2.2])
     
     with col_ctrl:
-        st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-        st.markdown("<div class='cyber-header'>🎚️ 歧视参数</div>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card-header'>🎚️ 歧视参数</div>", unsafe_allow_html=True)
         
         d = st.slider("贝克尔歧视系数 d", 0.0, 1.0, 0.3, 0.05, key="d_becker",
                       help="d=0 无歧视 | d=1 极强歧视。雇主愿意多付 d×w 来避免雇佣被歧视群体")
@@ -162,51 +97,36 @@ with tab1:
         
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 贝克尔模型计算
-    w_pref = mpl  # 偏好群体工资 = MPL（均衡）
-    w_disc = mpl / (1 + d)  # 被歧视群体工资 = MPL/(1+d)
+    w_pref = mpl
+    w_disc = mpl / (1 + d)
     wage_gap = w_pref - w_disc
     gap_pct = (wage_gap / w_pref) * 100
     
-    # 雇主歧视 vs 不歧视的福利对比
-    # 歧视雇主: utility = profit - d * L_disc (心理成本)
-    # 非歧视雇主: utility = profit → 可以雇佣被歧视群体降低成本
-    
-    # Plot: wage vs discrimination coefficient
     d_range = np.linspace(0, 1, 50)
     w_disc_range = mpl / (1 + d_range)
     
     fig1 = go.Figure()
     
-    # 偏好群体工资线（水平）
     fig1.add_trace(go.Scatter(
         x=d_range, y=[mpl] * 50, name="偏好群体工资",
-        line=dict(color='#10b981', width=3),
+        line=dict(color=COLOR["success"], width=3),
         hovertemplate='偏好群体: MPL=%{y:.1f}k<extra></extra>'
     ))
     
-    # 被歧视群体工资线（随d下降）
     fig1.add_trace(go.Scatter(
         x=d_range, y=w_disc_range, name="被歧视群体工资",
-        line=dict(color='#ef4444', width=4),
+        line=dict(color=COLOR["danger"], width=4),
         fill='tonexty', fillcolor='rgba(239, 68, 68, 0.1)',
-        hovertemplate=(
-            '歧视系数 d=%{x:.2f}<br>'
-            '被歧视群体: %{y:.1f}k<br>'
-            '工资差距: %{customdata:.1f}k'
-            '<extra></extra>'
-        ),
+        hovertemplate='歧视系数 d=%{x:.2f}<br>被歧视群体: %{y:.1f}k<br>工资差距: %{customdata:.1f}k<extra></extra>',
         customdata=mpl - w_disc_range
     ))
     
-    # 当前点
     fig1.add_trace(go.Scatter(
         x=[d], y=[w_disc], mode='markers', name=f"当前歧视水平 d={d}",
-        marker=dict(size=20, color='#ef4444', symbol='x', line=dict(width=3, color='white')),
+        marker=dict(size=20, color=COLOR["danger"], symbol='x', line=dict(width=3, color='white')),
         hovertemplate=f'<b>当前:</b> d={d}<br>被歧视工资={w_disc:.1f}k<br>差距={wage_gap:.1f}k ({gap_pct:.0f}%)<extra></extra>'
     ))
     
-    # 阴影面积标注福利损失
     fig1.add_trace(go.Scatter(
         x=np.concatenate([d_range, d_range[::-1]]),
         y=np.concatenate([[mpl] * 50, w_disc_range[::-1]]),
@@ -214,31 +134,28 @@ with tab1:
         line=dict(width=0), hoverinfo='skip', name='福利损失'
     ))
     
-    # 标注
     fig1.add_annotation(
         x=d_range[25], y=(mpl + w_disc_range[25]) / 2,
         text="⚠️ 同工不同酬<br>福利损失区",
-        showarrow=False, font=dict(size=13, color="#f87171"),
-        bgcolor="rgba(0,0,0,0.6)", borderpad=6
+        showarrow=False, font=dict(size=13, color=COLOR["danger"]),
+        bgcolor="rgba(255,255,255,0.9)", borderpad=6
     )
     
     fig1.update_layout(
         xaxis_title="歧视系数 d", yaxis_title="月工资 (k)",
-        xaxis=dict(range=[0, 1], gridcolor="rgba(51, 65, 85, 0.3)"),
-        yaxis=dict(range=[0, mpl * 1.3], gridcolor="rgba(51, 65, 85, 0.3)"),
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#e2e8f0", size=13),
+        xaxis=dict(range=[0, 1], gridcolor="rgba(0, 0, 0, 0.08)"),
+        yaxis=dict(range=[0, mpl * 1.3], gridcolor="rgba(0, 0, 0, 0.08)"),
+        template="plotly_white",
         height=420, margin=dict(l=40, r=20, t=30, b=40),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         hovermode='closest'
     )
     
     with col_graph:
-        st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+        st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.plotly_chart(fig1, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 贝克尔实验诊断
     c1, c2, c3 = st.columns(3)
     with c1:
         st.metric("偏好群体月薪", f"{w_pref:.1f}k", delta="MPL")
@@ -248,8 +165,8 @@ with tab1:
         st.metric("歧视年度成本", f"{(wage_gap * 12):.1f}k", delta="被歧视者年损失")
     
     st.markdown("---")
-    st.markdown("""
-    <div style="background: rgba(239,68,68,0.05); border-left: 3px solid #ef4444; padding: 16px; border-radius: 4px;">
+    st.markdown(f"""
+    <div style="background: #fef2f2; border-left: 3px solid {COLOR['danger']}; padding: 16px; border-radius: 4px;">
     <strong>🔬 贝克尔模型的核心洞见：</strong><br>
     具有歧视偏好的雇主，愿意为「不雇佣特定群体」支付额外的心理成本（d × MPL）。<br>
     在竞争性市场中，<strong>非歧视雇主的人力成本更低</strong>，理论上会逐步占领市场，挤出歧视者。<br>
@@ -261,8 +178,8 @@ with tab1:
 # TAB 2: Statistical Discrimination Spiral
 # ==========================================
 with tab2:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>📊 统计性歧视——「自我实现的预言」</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card-header'>📊 统计性歧视——「自我实现的预言」</div>", unsafe_allow_html=True)
     
     st.markdown("""
     **统计性歧视的逻辑链：**
@@ -283,7 +200,6 @@ with tab2:
         rounds = st.slider("观察代际数", 1, 10, 5, key="rounds")
     
     with col_s2:
-        # 模拟统计性歧视螺旋
         gaps = [initial_gap]
         for i in range(rounds):
             new_gap_raw = gaps[-1] + invest_reduction * (1 + i * 0.1)
@@ -294,52 +210,44 @@ with tab2:
         
         fig2 = go.Figure()
         
-        # 没有自我强化的对照线
         fig2.add_trace(go.Scatter(
             x=rounds_vec, y=[initial_gap] * (rounds + 1),
             mode='lines', name='无自我强化 (理想)',
-            line=dict(color='#10b981', width=2, dash='dash'),
+            line=dict(color=COLOR["success"], width=2, dash='dash'),
             hovertemplate='无自我强化: 差距=%{y}%<extra></extra>'
         ))
         
-        # 实际差距螺旋
         fig2.add_trace(go.Scatter(
             x=rounds_vec, y=gaps,
             mode='lines+markers', name='歧视自我强化螺旋',
-            line=dict(color='#ef4444', width=4),
-            marker=dict(size=10, color='#ef4444'),
+            line=dict(color=COLOR["danger"], width=4),
+            marker=dict(size=10, color=COLOR["danger"]),
             fill='tozeroy', fillcolor='rgba(239, 68, 68, 0.1)',
-            hovertemplate=(
-                '第%{x}代<br>'
-                '工资差距: %{y:.1f}%<br>'
-                '累计扩大: %{customdata:+.1f}%'
-                '<extra></extra>'
-            ),
+            hovertemplate='第%{x}代<br>工资差距: %{y:.1f}%<br>累计扩大: %{customdata:+.1f}%<extra></extra>',
             customdata=[g - initial_gap for g in gaps]
         ))
         
         fig2.add_annotation(
             x=rounds, y=gaps[-1] * 0.5,
             text=f"📈 第{rounds}代:<br>差距 = <b>{gaps[-1]:.1f}%</b>",
-            showarrow=False, font=dict(size=14, color="#f87171"),
-            bgcolor="rgba(0,0,0,0.7)", borderpad=8
+            showarrow=False, font=dict(size=14, color=COLOR["danger"]),
+            bgcolor="rgba(255,255,255,0.9)", borderpad=8
         )
         
         fig2.update_layout(
             xaxis_title="代际", yaxis_title="工资差距 (%)",
-            xaxis=dict(dtick=1, gridcolor="rgba(51, 65, 85, 0.3)"),
-            yaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#e2e8f0", size=13),
+            xaxis=dict(dtick=1, gridcolor="rgba(0, 0, 0, 0.08)"),
+            yaxis=dict(gridcolor="rgba(0, 0, 0, 0.08)"),
+            template="plotly_white",
             height=380, margin=dict(l=40, r=20, t=20, b=40),
-            legend=dict(font=dict(color="#e2e8f0")),
+            legend=dict(),
             hovermode='x unified'
         )
         
         st.plotly_chart(fig2, use_container_width=True)
     
     st.markdown(f"""
-    <div class="alert-red">
+    <div style="background: #fef2f2; border: 1px solid {COLOR['danger']}; border-radius: 8px; padding: 16px; margin: 12px 0;">
     <strong>⚠️ 螺旋诊断：</strong> 初始仅 {initial_gap}% 的工资差距，经过 {rounds} 代自我强化后，扩大至 <strong>{gaps[-1]:.1f}%</strong>（扩大了 {gaps[-1]/initial_gap:.1f} 倍）。<br>
     
     <strong>经济学含义：</strong>统计性歧视的危险不在于它起始时的准确度，而在于它的<strong>自我验证机制</strong>。
@@ -355,8 +263,8 @@ with tab2:
 # TAB 3: 中国政策实验
 # ==========================================
 with tab3:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>🏛️ 中国劳动力市场的歧视形态与政策实验</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card-header'>🏛️ 中国劳动力市场的歧视形态与政策实验</div>", unsafe_allow_html=True)
     
     st.markdown("""
     ### 🇨🇳 中国特色的歧视维度
@@ -403,7 +311,6 @@ with tab3:
             info_str = 0
     
     with col_policy:
-        # 计算总歧视效应
         total_disc = 0
         disc_labels = []
         if hukou:
@@ -419,28 +326,23 @@ with tab3:
             total_disc += st.session_state.get("school_strength", 10)
             disc_labels.append("学历")
         
-        # 政策效果
         policy_reduction = eq_pay_str * 0.01 * total_disc * 0.7
         policy_reduction += aa_quota * 0.015 * total_disc
         policy_reduction += info_str * 0.01 * total_disc * 0.3
         
         final_disc = max(0, total_disc - policy_reduction)
         
-        # 可视化
         disc_before = np.array([total_disc] * 8)
-        disc_after = np.full(8, final_disc)
         time_vec = np.arange(8)
         
         fig3 = go.Figure()
         
-        # 无政策的差异线
         fig3.add_trace(go.Scatter(
             x=time_vec, y=disc_before, name="无政策干预",
-            line=dict(color='#ef4444', width=3, dash='dot'),
+            line=dict(color=COLOR["danger"], width=3, dash='dot'),
             hovertemplate='无政策: 工资差距=%{y:.0f}%<extra></extra>'
         ))
         
-        # 政策路径
         policy_path = []
         for i in range(8):
             t = i / 7
@@ -448,37 +350,29 @@ with tab3:
         
         fig3.add_trace(go.Scatter(
             x=time_vec, y=policy_path, name="政策干预后",
-            line=dict(color='#10b981', width=4),
+            line=dict(color=COLOR["success"], width=4),
             fill='tonexty', fillcolor='rgba(16, 185, 129, 0.1)',
-            hovertemplate=(
-                '政策第%{x}年<br>'
-                '工资差距: %{y:.1f}%<br>'
-                '已消除: %{customdata:.1f}%'
-                '<extra></extra>'
-            ),
+            hovertemplate='政策第%{x}年<br>工资差距: %{y:.1f}%<br>已消除: %{customdata:.1f}%<extra></extra>',
             customdata=[total_disc - pp for pp in policy_path]
         ))
         
-        # 完全消除目标线
-        fig3.add_hline(y=0, line_dash="dash", line_color="#fbbf24",
-                       annotation_text="🎯 完全消除歧视", annotation_font=dict(color="#fbbf24"))
+        fig3.add_hline(y=0, line_dash="dash", line_color=COLOR["warning"],
+                       annotation_text="🎯 完全消除歧视", annotation_font=dict(color=COLOR["warning"]))
         
         fig3.update_layout(
             xaxis_title="政策实施年份", yaxis_title="工资差距 (%)",
-            xaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
-            yaxis=dict(range=[0, max(total_disc * 1.3, 10)], gridcolor="rgba(51, 65, 85, 0.3)"),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font=dict(color="#e2e8f0", size=13),
+            xaxis=dict(gridcolor="rgba(0, 0, 0, 0.08)"),
+            yaxis=dict(range=[0, max(total_disc * 1.3, 10)], gridcolor="rgba(0, 0, 0, 0.08)"),
+            template="plotly_white",
             height=380, margin=dict(l=40, r=20, t=20, b=40),
-            legend=dict(font=dict(color="#e2e8f0")),
+            legend=dict(),
             hovermode='x unified'
         )
         
         st.plotly_chart(fig3, use_container_width=True)
         
-        # 政策效果总结
         st.markdown(f"""
-        <div class="reform-green">
+        <div style="background: #ecfdf5; border: 1px solid {COLOR['success']}; border-radius: 8px; padding: 16px; margin: 12px 0;">
         <strong>🏛️ 政策干预效果评估</strong><br><br>
         
         📊 <strong>歧视维度：</strong>{' + '.join(disc_labels) if disc_labels else '无'}
@@ -501,8 +395,8 @@ with tab3:
 # ==========================================
 # 课程思政
 # ==========================================
-st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-st.markdown("<div class='cyber-header'>🏛️ 深度思考：歧视的经济学与社会学</div>", unsafe_allow_html=True)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<div class='card-header'>🏛️ 深度思考：歧视的经济学与社会学</div>", unsafe_allow_html=True)
 
 col_ideo1, col_ideo2 = st.columns(2)
 
@@ -539,7 +433,6 @@ with col_ideo2:
 
 st.markdown("---")
 
-# 预测 vs 实验对比
 if "disc_pred_done" in st.session_state:
     user_pred_d = st.session_state.get("disc_pred_answer", "")
     st.info(f"📝 **你的预测 vs 经济学共识：**\n\n"

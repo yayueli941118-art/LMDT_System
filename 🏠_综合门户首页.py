@@ -14,25 +14,9 @@ st.set_page_config(
 # ==========================================
 # 视觉样式
 # ==========================================
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 st.markdown("""
 <style>
-    html, body, [class*="css"] {
-        font-family: 'Microsoft YaHei', 'Heiti SC', sans-serif !important;
-        color: #0f172a;
-    }
-    .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 2rem !important;
-        max-width: 95% !important;
-    }
-    p, .stMarkdown, li {
-        font-size: 18px !important;
-        line-height: 1.7 !important;
-    }
-    h1 { font-size: 42px !important; font-weight: 900 !important; color: #1e3a8a !important; letter-spacing: 2px; }
-    h2 { font-size: 28px !important; font-weight: 800 !important; color: #1e40af !important; border-left: 8px solid #3b82f6; padding-left: 15px; margin-top: 30px; }
-    h3 { font-size: 22px !important; font-weight: 700 !important; }
-
     .school-banner {
         background: linear-gradient(120deg, #1e3a8a 0%, #2563eb 100%);
         padding: 30px; border-radius: 15px; color: white;

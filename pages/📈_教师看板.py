@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import COLOR, SHARED_CSS, render_page_banner, render_card_header
 
 st.set_page_config(page_title="教师看板", page_icon="📈", layout="wide")
-st.markdown(SHARED_CSS(color="#64748b", dark="#334155", light="#94a3b8"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
 render_page_banner("📈", "教师看板 · 班级学情诊断", "Learning Analytics Dashboard", "blue")
 
@@ -362,11 +362,13 @@ if all_data:
                                 labels={'x': '受教育年限', 'y': '人数'},
                                 title='受教育年限分布',
                                 color_discrete_sequence=[COLOR["primary_light"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
             with col_b:
                 if "歧视系数" in sub.columns:
                     fig = px.histogram(sub, x="歧视系数", title='歧视系数设置分布',
                                       color_discrete_sequence=[COLOR["danger"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
             
             if "乡村振兴补贴" in sub.columns:
@@ -380,12 +382,14 @@ if all_data:
                     tech_counts = sub["技术类型"].value_counts()
                     fig = px.pie(values=tech_counts.values, names=tech_counts.index,
                                 title='技术类型选择', color_discrete_sequence=[COLOR["market"], COLOR["primary_light"], COLOR["neutral"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
             with col_b:
                 if "薪酬模式" in sub.columns:
                     pay_counts = sub["薪酬模式"].value_counts()
                     fig = px.pie(values=pay_counts.values, names=pay_counts.index,
                                 title='薪酬模式选择', color_discrete_sequence=[COLOR["primary_light"], COLOR["market"], COLOR["warning"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
         
         elif lab_type == "宏观政策实验室":
@@ -394,6 +398,7 @@ if all_data:
                 if "AI替代冲击" in sub.columns:
                     fig = px.histogram(sub, x="AI替代冲击", title='AI冲击参数分布',
                                       color_discrete_sequence=[COLOR["macro"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
             with col_b:
                 all_policies = []
@@ -406,6 +411,7 @@ if all_data:
                     fig = px.bar(x=list(policy_counts.keys()), y=list(policy_counts.values()),
                                 labels={'x': '政策', 'y': '选择次数'},
                                 title='政策工具选择频次', color_discrete_sequence=[COLOR["macro"]])
+                    fig.update_layout(template="plotly_white")
                     st.plotly_chart(fig, use_container_width=True)
         
         st.divider()

@@ -1,143 +1,133 @@
 """
-共享色彩系统 & CSS 模板
-定义全局色板、卡片样式、页面Banner样式
+共享色彩系统 & CSS 模板 — 学术极简风
+全局主题由 .streamlit/config.toml 统一管控，CSS 仅做微调
 """
 
 # ==========================================
-# 全局色板
+# 语义化全局色板（严格遵循经济学/HR预警直觉）
 # ==========================================
 COLOR = {
-    "primary": "#1e3a8a",
-    "primary_light": "#3b82f6",
-    "success": "#10b981",
-    "danger": "#ef4444",
-    "warning": "#f59e0b",
+    "primary": "#2563eb",        # 学术蓝
+    "primary_light": "#60a5fa",
+    "success": "#10b981",        # 翠绿 — 积极/效率提升/向原点回归
+    "danger": "#ef4444",         # 警示红 — 贝弗里奇外移/失业飙升/福利陷阱
+    "warning": "#f59e0b",        # 暖橙 — 中性/过渡
     "neutral": "#64748b",
-    "bg": "#f1f5f9",
+    "bg": "#f8fafc",
     "card_bg": "#ffffff",
     "border": "#e2e8f0",
     "text_dark": "#0f172a",
     "text_light": "#64748b",
     # 各实验室主题色
-    "micro": "#3b82f6",
+    "micro": "#2563eb",
     "market": "#10b981",
     "macro": "#8b5cf6",
 }
 
 # ==========================================
-# 共享 CSS 模板 — 使用 __COLOR__ / __DARK__ / __LIGHT__ 占位符
-# 避免与 CSS 原生花括号冲突
+# 全局轻量 CSS（不使用任何动态颜色注入，由 config.toml 统一主题）
 # ==========================================
-_SHARED_CSS_TEMPLATE = """
+GLOBAL_CSS = """
 <style>
-    /* 全局字体与布局 */
-    html, body, [class*="css"] {{ font-family: 'Microsoft YaHei', sans-serif !important; background-color: #f1f5f9; }}
-    .block-container {{ padding-top: 3.5rem !important; padding-bottom: 5rem !important; max-width: 98% !important; }}
-    
-    /* 隐藏 Streamlit 默认头部 */
-    header {{visibility: hidden;}}
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
+    /* 全局 */
+    .block-container { padding-top: 2.5rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
+    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    p, li, .stMarkdown { font-size: 15px !important; line-height: 1.7 !important; }
 
-    p, li, .stMarkdown {{ font-size: 16px !important; line-height: 1.6 !important; }}
-
-    /* ===== 卡片通用样式 ===== */
-    .card {{
+    /* 卡片通用 */
+    .card {
         background-color: #ffffff;
-        border-radius: 12px;
-        padding: 25px;
-        margin-bottom: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        padding: 22px;
+        margin-bottom: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
         border: 1px solid #e2e8f0;
-        transition: all 0.3s ease;
-    }}
-    .card:hover {{
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        border-color: #3b82f6;
-        transform: translateY(-2px);
-    }}
+    }
 
-    /* ===== 卡片头部（带左侧色条） ===== */
-    .card-header {{
-        font-size: 22px;
+    /* 卡片头部（左侧学术蓝色条） */
+    .card-header {
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 15px;
-        border-left: 5px solid __COLOR__;
-        padding-left: 12px;
-        color: __DARK__;
-    }}
+        margin-bottom: 14px;
+        border-left: 4px solid #2563eb;
+        padding-left: 10px;
+        color: #0f172a;
+    }
 
-    /* ===== 指标显示 ===== */
-    .metric-value {{ font-size: 32px; font-weight: 800; }}
-    .metric-label {{ font-size: 16px; color: #64748b; font-weight: 500; }}
+    /* 指标值 */
+    .metric-value { font-size: 28px; font-weight: 800; }
+    .metric-label { font-size: 14px; color: #64748b; font-weight: 500; }
+    .metric-positive { color: #10b981; }
+    .metric-negative { color: #ef4444; }
+    .metric-neutral { color: #64748b; }
 
-    .metric-positive {{ color: #10b981; }}
-    .metric-negative {{ color: #ef4444; }}
-    .metric-neutral {{ color: #64748b; }}
-
-    /* ===== 页面顶部 Banner ===== */
-    .page-banner {{
-        background: linear-gradient(135deg, __DARK__ 0%, __LIGHT__ 100%);
+    /* 页面 Banner（学术蓝渐变） */
+    .page-banner {
+        background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
         color: white;
-        padding: 20px 30px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        padding: 18px 28px;
+        border-radius: 10px;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
         display: flex;
         justify-content: space-between;
         align-items: center;
-    }}
-    
-    /* ===== 挑战模式卡片 ===== */
-    .challenge-card {{
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-        border: 2px solid #f59e0b;
-        border-radius: 12px;
-        padding: 20px;
+    }
+
+    /* 挑战任务卡 */
+    .challenge-card {
+        background: #f8fafc;
+        border-left: 4px solid #2563eb;
+        padding: 15px;
         margin-bottom: 20px;
-    }}
-    .challenge-icon {{ font-size: 36px; display: block; margin-bottom: 8px; }}
+        border-radius: 0 8px 8px 0;
+    }
 
-    /* ===== 预测区域 ===== */
-    .predict-box {{
+    /* 预测验证区域 */
+    .predict-box {
         background: #eff6ff;
-        border: 2px solid #3b82f6;
-        border-radius: 12px;
-        padding: 20px;
-        margin: 15px 0;
-    }}
+        border: 2px solid #2563eb;
+        border-radius: 10px;
+        padding: 18px;
+        margin: 12px 0;
+    }
 
-    /* ===== 思政标签 ===== */
-    .policy-tag {{
+    /* 思政/政策标签 */
+    .policy-tag {
         display: inline-block;
-        background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+        background: #2563eb;
         color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 13px;
+        padding: 3px 10px;
+        border-radius: 16px;
+        font-size: 12px;
         font-weight: 600;
-        margin: 2px 4px;
-    }}
-    .policy-tag-green {{
-        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-    }}
+        margin: 2px 3px;
+    }
+    .policy-tag-green {
+        background: #10b981;
+    }
+    .policy-tag-red {
+        background: #ef4444;
+    }
+    .policy-tag-orange {
+        background: #f59e0b;
+    }
+
+    /* 侧边栏 */
+    section[data-testid="stSidebar"] {
+        background-color: #f1f5f9 !important;
+        border-right: 1px solid #e2e8f0 !important;
+    }
 </style>
 """
 
 
-def get_lab_css(color: str, dark: str, light: str) -> str:
-    """生成特定实验室的主题 CSS（安全替换，不触发format冲突）"""
-    return (_SHARED_CSS_TEMPLATE
-            .replace("__COLOR__", color)
-            .replace("__DARK__", dark)
-            .replace("__LIGHT__", light))
+def SHARED_CSS(**kwargs) -> str:
+    """向后兼容：返回全局 CSS（不再接受主题参数，由 config.toml 统一管控）"""
+    return GLOBAL_CSS
 
 
-# 向后兼容：SHARED_CSS 是模板函数别名
-def SHARED_CSS(color: str = "#3b82f6", dark: str = "#1e3a8a", light: str = "#3b82f6") -> str:
-    return get_lab_css(color, dark, light)
-
-
-# 兼容旧接口
 CARD_CSS = "card"
 PAGE_BANNER_CSS = "page-banner"

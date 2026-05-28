@@ -10,73 +10,12 @@ import plotly.graph_objects as go
 import sys, os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from shared import render_metric_card
+from shared import COLOR, SHARED_CSS, render_page_banner
 
 st.set_page_config(page_title="要素配置沙盘", page_icon="🏗️", layout="wide")
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
-# ==========================================
-# 赛博暗色 UI
-# ==========================================
-st.markdown("""
-<style>
-    .stApp { background-color: #0b0f19 !important; }
-    section[data-testid="stSidebar"] {
-        background-color: #090d16 !important;
-        border-right: 1px solid rgba(16, 185, 129, 0.1) !important;
-    }
-    .stApp,
-    .stApp p, .stApp span, .stApp div,
-    .stApp li, .stApp strong, .stApp b,
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-    div[data-testid="stMarkdownContainer"],
-    div[data-testid="stMarkdownContainer"] * {
-        color: #e2e8f0 !important;
-    }
-    .stMarkdown table th, .stMarkdown table td {
-        border-color: rgba(148, 163, 184, 0.3) !important;
-        color: #cbd5e1 !important;
-    }
-    section[data-testid="stSidebar"] * {
-        color: #e2e8f0 !important;
-    }
-    div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
-        color: #10b981 !important; font-weight: 600 !important;
-    }
-    div[data-testid="stRadio"] label[data-selected="true"] {
-        color: #34d399 !important; font-weight: 700 !important;
-    }
-    .tech-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-        border: 1px solid rgba(16, 185, 129, 0.15) !important;
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 12px; padding: 24px; margin-bottom: 24px;
-    }
-    .cyber-header {
-        font-size: 20px; font-weight: 700; color: #ffffff !important;
-        margin-bottom: 20px; display: flex; align-items: center;
-    }
-    .cyber-header::before {
-        content: ''; display: inline-block; width: 6px; height: 24px;
-        background: #10b981; margin-right: 12px; border-radius: 3px;
-        box-shadow: 0 0 8px #10b981;
-    }
-    .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
-    header {visibility: hidden;} #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# 顶部 Banner
-# ==========================================
-st.markdown("""
-<div style="margin-bottom: 20px;">
-    <h1 style="color: #ffffff; font-weight: 900; margin-bottom: 5px;">🏗️ 要素配置战略沙盘</h1>
-    <h4 style="color: #10b981; font-weight: 600; letter-spacing: 1px;">
-        长期劳动需求：替代效应 vs 规模效应 <span style="color:#64748b; font-weight:400;">— 某新能源车企产能博弈</span>
-    </h4>
-</div>
-""", unsafe_allow_html=True)
+render_page_banner("🏗️", "要素配置战略沙盘", "长期劳动需求：替代效应 vs 规模效应", "green")
 
 # 情境设定
 with st.expander("📋 场景背景（点击展开）", expanded=False):
@@ -98,59 +37,7 @@ with st.expander("📋 场景背景（点击展开）", expanded=False):
     """)
 
 # ==========================================
-# 参数控制台
-# ==========================================
-# ==========================================
-# 3. 参数控制台 + 进度滑块
-# ==========================================
-col_ctrl, col_graph = st.columns([1, 2.5])
-
-with col_ctrl:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>🎛️ 生产参数控制</div>", unsafe_allow_html=True)
-    
-    w0 = st.slider("初始工人年工资 w₀ (万元)", 5, 30, 15, key="w0",
-                   help="传统产业工人年薪（万元），含五险一金")
-    r = st.slider("机器人年租金 r (万元/台)", 5, 50, 20, key="r",
-                  help="工业机器人+AI系统年化成本")
-    alpha = st.slider("资本密集度 α", 0.1, 0.6, 0.3, 0.05, key="alpha",
-                      help="α越大，机器人越重要（技术密集型）；α越小，人力越重要（劳动密集型）")
-    w_drop = st.slider("稳岗补贴导致工资降幅 (%)", 5, 60, 30, 5, key="w_drop",
-                       help="地方政府稳岗补贴使企业实际工资成本下降")
-    
-    w1 = w0 * (1 - w_drop / 100)
-    
-    st.markdown("<hr style='border-color: rgba(16, 185, 129, 0.2);'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>🎚️ 补贴生效进度</div>", unsafe_allow_html=True)
-    
-    progress = st.slider("拖动滑块，亲手推演要素重组 👇", 0, 100, 0, 1, key="progress",
-                         help="0% = 初始规划 → 100% = 稳岗补贴完全生效")
-    
-    if progress < 5:
-        st.info("📍 **初始规划** — 补贴尚未生效")
-    elif progress < 50:
-        st.warning(f"⚡ **替代效应区** — 工资下降 {progress:.0f}%，人比机器划算了！")
-    else:
-        st.success(f"📈 **规模效应区** — 成本大幅下降，CEO 拍板扩产！")
-    
-    st.markdown("<hr style='border-color: rgba(16, 185, 129, 0.2);'>", unsafe_allow_html=True)
-    st.caption("📊 快捷情景")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        def _preset_robot():
-            st.session_state.w0 = 8; st.session_state.r = 30
-            st.session_state.alpha = 0.5; st.session_state.w_drop = 30
-        st.button("🤖 机器人主导", use_container_width=True, key="preset_robot", on_click=_preset_robot)
-    with col_b:
-        def _preset_labor():
-            st.session_state.w0 = 20; st.session_state.r = 10
-            st.session_state.alpha = 0.2; st.session_state.w_drop = 40
-        st.button("👷 劳动密集型", use_container_width=True, key="preset_labor", on_click=_preset_labor)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
-# ==========================================
-# 4. 核心算法 (Cobb-Douglas)
+# 核心算法 (Cobb-Douglas)
 # ==========================================
 def optimal_inputs(Q, w, r, a):
     K_opt = Q * (a / (1 - a) * w / r) ** (1 - a)
@@ -167,7 +54,56 @@ def isoquant(Q, L_range, a):
     return (Q / (L_range ** (1 - a))) ** (1 / a)
 
 # ==========================================
-# 5. 三步解算
+# 参数控制台
+# ==========================================
+col_ctrl, col_graph = st.columns([1, 2.5])
+
+with col_ctrl:
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card-header'>🎛️ 生产参数控制</div>", unsafe_allow_html=True)
+    
+    w0 = st.slider("初始工人年工资 w₀ (万元)", 5, 30, 15, key="w0",
+                   help="传统产业工人年薪（万元），含五险一金")
+    r = st.slider("机器人年租金 r (万元/台)", 5, 50, 20, key="r",
+                  help="工业机器人+AI系统年化成本")
+    alpha = st.slider("资本密集度 α", 0.1, 0.6, 0.3, 0.05, key="alpha",
+                      help="α越大，机器人越重要（技术密集型）；α越小，人力越重要（劳动密集型）")
+    w_drop = st.slider("稳岗补贴导致工资降幅 (%)", 5, 60, 30, 5, key="w_drop",
+                       help="地方政府稳岗补贴使企业实际工资成本下降")
+    
+    w1 = w0 * (1 - w_drop / 100)
+    
+    st.markdown("<hr style='border-color: rgba(0,0,0,0.08);'>", unsafe_allow_html=True)
+    st.markdown("<div class='card-header'>🎚️ 补贴生效进度</div>", unsafe_allow_html=True)
+    
+    progress = st.slider("拖动滑块，亲手推演要素重组 👇", 0, 100, 0, 1, key="progress",
+                         help="0% = 初始规划 → 100% = 稳岗补贴完全生效")
+    
+    if progress < 5:
+        st.info("📍 **初始规划** — 补贴尚未生效")
+    elif progress < 50:
+        st.warning(f"⚡ **替代效应区** — 工资下降 {progress:.0f}%，人比机器划算了！")
+    else:
+        st.success(f"📈 **规模效应区** — 成本大幅下降，CEO 拍板扩产！")
+    
+    st.markdown("<hr style='border-color: rgba(0,0,0,0.08);'>", unsafe_allow_html=True)
+    st.caption("📊 快捷情景")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        def _preset_robot():
+            st.session_state.w0 = 8; st.session_state.r = 30
+            st.session_state.alpha = 0.5; st.session_state.w_drop = 30
+        st.button("🤖 机器人主导", use_container_width=True, key="preset_robot", on_click=_preset_robot)
+    with col_b:
+        def _preset_labor():
+            st.session_state.w0 = 20; st.session_state.r = 10
+            st.session_state.alpha = 0.2; st.session_state.w_drop = 40
+        st.button("👷 劳动密集型", use_container_width=True, key="preset_labor", on_click=_preset_labor)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 三步解算
 # ==========================================
 Q0_guess = 100
 K_tmp, L_tmp = optimal_inputs(Q0_guess, w0, r, alpha)
@@ -181,7 +117,7 @@ K_B, L_B = optimal_inputs(Q0, w1, r, alpha)
 K_C, L_C, Q1 = max_output(C0, w1, r, alpha)
 
 # ==========================================
-# 6. 连续插值解算
+# 连续插值解算
 # ==========================================
 t = progress / 100.0
 w_current = w0 + (w1 - w0) * t
@@ -197,7 +133,7 @@ else:
     phase = "inc"
 
 # ==========================================
-# 7. Plotly 动态可视化
+# Plotly 动态可视化
 # ==========================================
 L_plot = np.linspace(1, max(L_A, L_B, L_C) * 1.6, 300)
 
@@ -227,19 +163,18 @@ fig.add_trace(go.Scatter(
     x=[L_A], y=[K_A],
     mode='markers+text', name="规划点 A",
     text=["A"], textposition="top right",
-    textfont=dict(size=16, color='#3b82f6', family='Arial Black'),
-    marker=dict(size=14, color='#3b82f6', line=dict(width=2, color='white')),
+    textfont=dict(size=16, color=COLOR["primary"], family='Arial Black'),
+    marker=dict(size=14, color=COLOR["primary"], line=dict(width=2, color='white')),
     hovertemplate=f'<b>点A：初始规划</b><br>工人: {L_A:.0f} | 机器人: {K_A:.1f}<br>产量 Q₀ | 成本 {C0:.0f}万<extra></extra>'
 ))
 
-# 当前等成本线（随补贴生效旋转）
-C_cur = w_current * L_cur + r * K_cur
+# 当前等成本线
 L_cost_cur = np.array([0, C0 / w_current])
 K_cost_cur = np.array([C0 / r, 0])
 fig.add_trace(go.Scatter(
     x=L_cost_cur, y=K_cost_cur,
     mode='lines', name=f"当前等成本线",
-    line=dict(color='#10b981', width=3.5),
+    line=dict(color=COLOR["success"], width=3.5),
     hovertemplate=f'补贴后工资 {w_current:.0f}万<br>预算 C₀={C0:.0f}万<extra></extra>'
 ))
 
@@ -249,8 +184,8 @@ if progress > 5:
         x=[L_B], y=[K_B],
         mode='markers+text', name="替代点 B",
         text=["B"], textposition="bottom right",
-        textfont=dict(size=14, color='#fbbf24', family='Arial Black'),
-        marker=dict(size=12, color='#fbbf24', symbol='diamond', line=dict(width=2, color='white')),
+        textfont=dict(size=14, color=COLOR["warning"], family='Arial Black'),
+        marker=dict(size=12, color=COLOR["warning"], symbol='diamond', line=dict(width=2, color='white')),
         hovertemplate=f'<b>点B：纯替代效应</b><br>工人 +{L_B-L_A:.0f} | 机器人 -{K_A-K_B:.1f}<br>产量不变 Q₀<extra></extra>'
     ))
 
@@ -260,23 +195,23 @@ if progress > 40:
     fig.add_trace(go.Scatter(
         x=L_plot, y=K_iso_C,
         mode='lines', name=f"等产量线 Q₁",
-        line=dict(color='rgba(52, 211, 153, 0.5)', width=2, dash='dot'),
+        line=dict(color='rgba(16, 185, 129, 0.5)', width=2, dash='dot'),
         hovertemplate=f'产量 Q₁={Q1:.0f} (+{(Q1/Q0-1)*100:.0f}%)<extra></extra>'
     ))
     fig.add_trace(go.Scatter(
         x=[L_C], y=[K_C],
         mode='markers+text', name="扩张点 C",
         text=["C"], textposition="top right",
-        textfont=dict(size=16, color='#34d399', family='Arial Black'),
-        marker=dict(size=16, color='#34d399', symbol='star', line=dict(width=2, color='white')),
+        textfont=dict(size=16, color=COLOR["success"], family='Arial Black'),
+        marker=dict(size=16, color=COLOR["success"], symbol='star', line=dict(width=2, color='white')),
         hovertemplate=f'<b>点C：规模效应</b><br>工人 +{L_C-L_B:.0f} | 机器人 +{K_C-K_B:.1f}<br>产量 Q₁={Q1:.0f}<extra></extra>'
     ))
 
-# 当前点（拖动的球）
+# 当前点
 fig.add_trace(go.Scatter(
     x=[L_cur], y=[K_cur],
     mode='markers', name="📍 当前位置",
-    marker=dict(size=22, color='#00f2fe', symbol='circle',
+    marker=dict(size=22, color=COLOR["primary_light"], symbol='circle',
                 line=dict(width=4, color='white'), opacity=0.9),
     hovertemplate=(
         f'<b>🎚️ 当前位置 (进度 {progress}%)</b><br>'
@@ -302,7 +237,7 @@ if len(trail_L) > 1:
     fig.add_trace(go.Scatter(
         x=trail_L, y=trail_K,
         mode='lines', name="运动轨迹",
-        line=dict(color='rgba(0, 242, 254, 0.4)', width=2),
+        line=dict(color='rgba(96, 165, 250, 0.4)', width=2),
         hoverinfo='skip'
     ))
 
@@ -310,40 +245,39 @@ if len(trail_L) > 1:
 if progress > 5:
     fig.add_annotation(
         x=(L_A + L_B) / 2, y=(K_A + K_B) / 2,
-        text=f"替代效应<br>人替机器",
-        showarrow=True, arrowhead=2, arrowcolor="#fbbf24", arrowsize=1,
-        font=dict(size=11, color="#fbbf24"), bgcolor="rgba(0,0,0,0.6)", borderpad=4
+        text="替代效应<br>人替机器",
+        showarrow=True, arrowhead=2, arrowcolor=COLOR["warning"], arrowsize=1,
+        font=dict(size=11, color=COLOR["warning"]), bgcolor="rgba(255,255,255,0.9)", borderpad=4
     )
 if progress > 50:
     fig.add_annotation(
         x=(L_B + L_C) / 2, y=(K_B + K_C) / 2,
-        text=f"规模效应<br>全要素扩张",
-        showarrow=True, arrowhead=2, arrowcolor="#34d399", arrowsize=1,
-        font=dict(size=11, color="#34d399"), bgcolor="rgba(0,0,0,0.6)", borderpad=4
+        text="规模效应<br>全要素扩张",
+        showarrow=True, arrowhead=2, arrowcolor=COLOR["success"], arrowsize=1,
+        font=dict(size=11, color=COLOR["success"]), bgcolor="rgba(255,255,255,0.9)", borderpad=4
     )
 
 fig.update_layout(
     xaxis_title="产业工人 L (人/年)",
     yaxis_title="工业机器人 K (台/年)",
-    xaxis=dict(range=[0, max(L_A, L_B, L_C) * 1.7], gridcolor="rgba(51, 65, 85, 0.3)"),
-    yaxis=dict(range=[0, max(K_A, K_B, K_C) * 1.7], gridcolor="rgba(51, 65, 85, 0.3)"),
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="#e2e8f0", size=13),
+    xaxis=dict(range=[0, max(L_A, L_B, L_C) * 1.7], gridcolor="rgba(0, 0, 0, 0.08)"),
+    yaxis=dict(range=[0, max(K_A, K_B, K_C) * 1.7], gridcolor="rgba(0, 0, 0, 0.08)"),
+    template="plotly_white",
     height=550, margin=dict(l=40, r=20, t=40, b=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     hovermode='closest'
 )
 
 with col_graph:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 8. 动态诊断报告
+# 动态诊断报告
 # ==========================================
-st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-st.markdown("<div class='cyber-header'>💡 孪生系统智能诊断报告</div>", unsafe_allow_html=True)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<div class='card-header'>💡 孪生系统智能诊断报告</div>", unsafe_allow_html=True)
 
 sub_K = K_A - K_B; sub_L = L_B - L_A
 scale_K = K_C - K_B; scale_L = L_C - L_B

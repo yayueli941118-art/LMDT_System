@@ -1,10 +1,11 @@
 """
 可复用 UI 组件
-Banner、卡片头部、指标卡、挑战模式、预测-验证
+Banner、卡片头部、指标卡、挑战模式、预测验证、任务卡
 """
 
 import streamlit as st
 from .config import SCHOOL_NAME, DEPARTMENT, AUTHOR_NAME, COMPETITION_INFO
+from .styles import COLOR
 
 
 def render_page_banner(icon: str, title: str, subtitle: str = "", theme: str = "blue"):
@@ -13,77 +14,101 @@ def render_page_banner(icon: str, title: str, subtitle: str = "", theme: str = "
     theme: "blue" | "green" | "purple"
     """
     themes = {
-        "blue": ("#1e3a8a", "#3b82f6"),
+        "blue": ("#1e3a8a", "#2563eb"),
         "green": ("#065f46", "#10b981"),
         "purple": ("#4c1d95", "#8b5cf6"),
     }
     dark, light = themes.get(theme, themes["blue"])
 
-    sub_line = ""
-    if subtitle:
-        sub_line = f'<div style="font-size: 16px; margin-top:5px; opacity:0.9;">{subtitle}</div>'
+    sub_html = f'<div style="font-size:14px; margin-top:4px; opacity:0.85;">{subtitle}</div>' if subtitle else ""
 
     st.markdown(f"""
     <div style="
         background: linear-gradient(135deg, {dark} 0%, {light} 100%);
         color: white;
-        padding: 20px 30px;
-        border-radius: 12px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        padding: 18px 28px;
+        border-radius: 10px;
+        margin-bottom: 22px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
         display: flex;
         justify-content: space-between;
         align-items: center;
     ">
         <div>
-            <div style="font-size: 24px; font-weight: 800;">
+            <div style="font-size:22px; font-weight:800;">
                 {icon} {title}
-                <span style="font-size:18px; opacity:0.8; font-weight:400;">({subtitle})</span>
+                {f'<span style="font-size:16px; opacity:0.8; font-weight:400;"> · {subtitle}</span>' if subtitle else ''}
             </div>
-            {sub_line}
+            {sub_html}
         </div>
-        <div style="background: rgba(255,255,255,0.2); padding: 5px 15px; border-radius: 20px; font-size: 14px;">
-            👩‍🏫 课程负责人：{AUTHOR_NAME}
+        <div style="background: rgba(255,255,255,0.18); padding: 4px 14px; border-radius: 16px; font-size:13px;">
+            👩‍🏫 {AUTHOR_NAME}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 
-def render_card_header(title: str, color: str = "#3b82f6", dark_color: str = "#1e3a8a"):
+def render_card_header(title: str, color: str = None, dark_color: str = None):
     """渲染卡片标题"""
-    return st.markdown(f"""
+    c = color or COLOR["primary"]
+    st.markdown(f"""
     <div style="
-        color: {dark_color};
-        font-size: 22px;
+        font-size: 19px;
         font-weight: 700;
-        margin-bottom: 15px;
-        border-left: 5px solid {color};
-        padding-left: 12px;
+        margin-bottom: 12px;
+        border-left: 4px solid {c};
+        padding-left: 10px;
+        color: #0f172a;
     ">{title}</div>
     """, unsafe_allow_html=True)
 
 
 def render_metric_card(label: str, value, value_color: str = "neutral"):
     """
-    渲染指标卡片
-    value_color: "positive" | "negative" | "neutral" | 自定义CSS颜色
+    渲染指标卡片 - 已废弃，建议使用 st.metric
     """
-    colors = {"positive": "#10b981", "negative": "#ef4444", "neutral": "#64748b"}
+    colors = {"positive": COLOR["success"], "negative": COLOR["danger"], "neutral": COLOR["neutral"]}
     color = colors.get(value_color, value_color)
     st.markdown(f"""
-    <div style='margin-bottom:10px;'>
-        <div style='font-size:16px; color:#64748b; font-weight:500;'>{label}</div>
-        <div style='font-size:32px; font-weight:800; color:{color};'>{value}</div>
+    <div style='margin-bottom:8px;'>
+        <div style='font-size:14px; color:{COLOR["text_light"]}; font-weight:500;'>{label}</div>
+        <div style='font-size:28px; font-weight:800; color:{color};'>{value}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+def render_challenge_card(title: str, description: str, theme: str = "blue"):
+    """
+    渲染「市长挑战任务卡」—— 沉浸式任务描述
+    
+    theme: "blue" | "green" | "purple"
+    """
+    color_map = {
+        "blue": COLOR["primary"],
+        "green": COLOR["success"],
+        "purple": COLOR["macro"],
+    }
+    border_color = color_map.get(theme, COLOR["primary"])
+
+    st.markdown(f"""
+    <div style="
+        background-color: #f8fafc;
+        border-left: 4px solid {border_color};
+        padding: 15px 18px;
+        margin-bottom: 18px;
+        border-radius: 0 8px 8px 0;
+    ">
+        <b>🎯 挑战任务：</b>{description}
     </div>
     """, unsafe_allow_html=True)
 
 
 def render_challenge_banner(challenge_id: str, tasks: list):
     """
-    渲染挑战任务栏
+    渲染挑战任务栏（可折叠）
     tasks: [(emoji, title, description), ...]
     """
-    with st.expander(f"🎯 今日挑战任务", expanded=True):
+    with st.expander("🎯 今日挑战任务", expanded=True):
         for i, (emoji, title, desc) in enumerate(tasks):
             st.markdown(f"##### {emoji} 任务 {i+1}：{title}")
             st.markdown(f"*{desc}*")
@@ -91,49 +116,53 @@ def render_challenge_banner(challenge_id: str, tasks: list):
                 st.divider()
 
 
-def render_predict_verify(question: str, options: list, correct_answer: str, var_name: str):
+def render_predict_gate(question: str, options: list, var_name: str):
     """
-    预测-验证交互组件
+    前测拦截 — 必须回答预测题才能继续实验
     
     question: 预测问题
-    options: 选项列表 ["A. 增加", "B. 减少", "C. 不变"]
-    correct_answer: 正确答案（需与options中的某一项完全匹配）
-    var_name: session_state 变量名前缀，用于存储状态
+    options: 选项列表
+    var_name: session_state 前缀
     
-    返回: (已预测, 预测是否开始, 用户答案)
+    返回: True 表示已解锁（可渲染后续内容），False 表示还在等待预测
     """
-    predict_key = f"{var_name}_predict"
-    answer_key = f"{var_name}_answer"
     done_key = f"{var_name}_done"
-    
-    # 初始化
+    answer_key = f"{var_name}_answer"
+
     if done_key not in st.session_state:
         st.session_state[done_key] = False
-    
+
     if not st.session_state[done_key]:
-        st.markdown('<div class="predict-box">', unsafe_allow_html=True)
-        st.markdown(f"##### 🔮 先预测：{question}")
-        st.radio("请选择你的预测：", options, key=predict_key)
-        
-        def _confirm_predict():
-            st.session_state[answer_key] = st.session_state[predict_key]
-            st.session_state[done_key] = True
-        
-        st.button("✅ 确认预测，开始实验", key=f"{var_name}_confirm", on_click=_confirm_predict)
-        st.markdown('</div>', unsafe_allow_html=True)
-        return False, False, None
+        st.markdown("""
+        <div style="
+            background: #eff6ff;
+            border: 2px solid #2563eb;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 12px 0;
+        ">
+        """, unsafe_allow_html=True)
+        st.markdown(f"##### 🔮 先预测，再实验")
+        st.markdown(f"*在调整任何参数之前，先做一个直觉判断：*")
+        st.radio(question, options, key=f"{var_name}_radio")
+
+        col_btn, _ = st.columns([1, 3])
+        with col_btn:
+            if st.button("✅ 确认预测，进入实验", key=f"{var_name}_btn", use_container_width=True):
+                st.session_state[answer_key] = st.session_state[f"{var_name}_radio"]
+                st.session_state[done_key] = True
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        return False
     else:
-        user_answer = st.session_state.get(answer_key)
-        is_correct = (user_answer == correct_answer)
-        if is_correct:
-            st.success(f"✅ 预测正确！你的判断「{user_answer}」与实验结果一致。")
-        else:
-            # 提取正确项的前几个字符作为简洁提示
-            st.info(f"📚 你的预测是「{user_answer}」，实际结果是「{correct_answer}」。让我们看看为什么——")
-        return True, is_correct, user_answer
+        user_answer = st.session_state.get(answer_key, "")
+        st.info(f"📝 你的预测：**{user_answer}** — 实验结束后看看你的直觉准不准！")
+        return True
 
 
-def render_policy_tag(text: str, tag_type: str = "red"):
+def render_policy_tag(text: str, tag_type: str = "blue"):
     """渲染思政/政策标签"""
-    cls = "policy-tag-green" if tag_type == "green" else "policy-tag"
+    cls_map = {"blue": "policy-tag", "green": "policy-tag-green",
+               "red": "policy-tag-red", "orange": "policy-tag-orange"}
+    cls = cls_map.get(tag_type, "policy-tag")
     st.markdown(f'<span class="{cls}">{text}</span>', unsafe_allow_html=True)

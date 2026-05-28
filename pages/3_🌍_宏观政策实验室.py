@@ -1,6 +1,6 @@
 """
 宏观政策实验室 — 贝弗里奇曲线 + AI冲击 + 政策沙盘 + 新质生产力
-真实数据基准、挑战模式、思政融合
+学术极简风 · 前测拦截 · 挑战任务卡
 """
 
 import streamlit as st
@@ -11,366 +11,320 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import (
     COLOR, SHARED_CSS,
-    render_page_banner, render_metric_card, render_card_header,
-    render_challenge_banner, render_predict_verify, render_policy_tag,
+    render_page_banner, render_card_header,
+    render_challenge_card, render_predict_gate, render_policy_tag,
     calc_beveridge,
     generate_lab_report, generate_report_download,
     CHINA_BEVERIDGE_BASELINE, DATA_SOURCES,
 )
 
 st.set_page_config(page_title="宏观政策实验室", page_icon="🌍", layout="wide")
-st.markdown(SHARED_CSS(color=COLOR["macro"], dark="#4c1d95", light="#8b5cf6"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
-render_page_banner("🌍", "宏观政策实验室", "Macro Lab", "purple")
+render_page_banner("🌍", "宏观政策实验室", "Macro Lab · Beveridge Curve", "purple")
 
 # ==========================================
-# 侧边栏
+# 侧边栏 — 仅保留全局重置 + 导航
 # ==========================================
 with st.sidebar:
-    st.header("⚙️ 全局设置")
-    
+    st.header("⚙️ 全局控制")
+
     def _reset_macro():
         for key in list(st.session_state.keys()):
-            if key.startswith(("ai_", "mis_", "pol_", "macro_")):
+            if key.startswith(("ai_", "mis_", "pol_", "macro_", "bc_")):
                 del st.session_state[key]
-    
+
     st.button("🔄 重置所有参数", use_container_width=True, on_click=_reset_macro)
     st.divider()
     st.markdown("##### 🏛️ 政策百科")
-    st.info("""
-    **最低工资调整** → 保障低端收入，但可能降低低技能就业
-    
-    **技能重塑补贴** → 降低结构性错配，长期最优，符合新质生产力
-    
-    **失业救济金** → 社会安全网，过高可能推高保留工资
-    """)
+    st.caption("**最低工资** → 保障低端收入，可能降低低技能就业")
+    st.caption("**技能重塑补贴** → 降低错配，新质生产力核心")
+    st.caption("**失业救济金** → 安全网，过高推高保留工资")
     st.divider()
     st.page_link("🏠_综合门户首页.py", label="🏠 返回门户", use_container_width=True)
 
 # ==========================================
-# 挑战模式
+# 挑战任务卡
 # ==========================================
-render_challenge_banner("macro", [
-    ("🤖", "AI冲击应对", "AI冲击设为70%，请选择最优政策组合使贝弗里奇曲线尽可能接近理想状态。\n提示：多项政策可叠加"),
-    ("🌐", "新质生产力战略", "设置技能错配度为1.5，然后开启「技能重塑补贴」。观察曲线回移幅度，理解新质生产力战略的核心逻辑"),
-])
-
-# 挑战模式约束
-if "macro_attempts" not in st.session_state:
-    st.session_state.macro_attempts = 3
-    st.session_state.macro_budget = 100
-
-with st.expander("🎯 挑战规则（先读！）", expanded=True):
-    c1, c2 = st.columns(2)
-    with c1:
-        st.metric("剩余尝试次数", st.session_state.macro_attempts)
-    with c2:
-        st.metric("剩余财政预算", f"{st.session_state.macro_budget} 亿")
-    st.caption("💡 每次提交政策消耗1次尝试 + 对应预算。3次用完后以最后一次提交的结果作为最终成绩。")
+render_challenge_card(
+    title="市长挑战",
+    description="AI替代指数高达 <b style='color:#ef4444;'>70%</b>，请在不动用救济金的前提下，将失业率控制在 <b style='color:#10b981;'>5% 以内</b>。"
+)
+with st.expander("📋 更多挑战任务", expanded=False):
+    st.markdown("##### 🤖 AI冲击应对")
+    st.caption("AI冲击70% → 选最优政策组合使贝弗里奇曲线尽可能接近理想状态。可叠加。")
+    st.markdown("##### 🌐 新质生产力战略")
+    st.caption("设置技能错配度1.5 → 开启「技能重塑补贴」→ 观察曲线回移幅度。")
 
 # ==========================================
-# 预测验证
+# 前测拦截 — 必须先预测才能实验
 # ==========================================
-pred_done, pred_correct, pred_answer = render_predict_verify(
-    question="当AI技术冲击增强时，贝弗里奇曲线会如何变化？",
+gate_unlocked = render_predict_gate(
+    question="**当AI技术冲击增强时，贝弗里奇曲线会如何变化？**",
     options=["A. 向原点靠近（匹配效率提升）", "B. 向右上方移动（匹配效率下降）", "C. 没有变化"],
-    correct_answer="B. 向右上方移动（匹配效率下降）",
     var_name="macro_bc"
 )
 
-# ==========================================
-# 参数区
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("🎛️ 宏观数据驾驶舱", color=COLOR["macro"], dark_color="#4c1d95")
-
-st.markdown("**📌 调节宏观参数**")
-c_ai, c_mis, c_pol = st.columns([1, 1, 2])
-with c_ai:
-    ai_risk = st.slider("AI 替代冲击 (%)", 0, 100, 30, key="ai_main",
-                        help="模拟AI/自动化对旧技能岗位的替代程度")
-with c_mis:
-    mismatch = st.slider("技能错配度", 0.0, 2.0, 0.8, 0.1, key="mis_main",
-                        help="0=无错配, 2.0=严重错配")
-with c_pol:
-    policy = st.multiselect("政策工具箱", 
-                            ["最低工资调整", "技能重塑补贴(Reskilling)", "失业救济金"],
-                            key="pol_main",
-                            help="可多选，政策效果可叠加")
-    policy_score = 1.0 if "技能重塑补贴(Reskilling)" in policy else 0
-
-# 新质生产力标签
-if "技能重塑补贴(Reskilling)" in policy:
-    render_policy_tag("🚀 新质生产力战略 · 技能重塑：培养适应AI时代的复合型人才", "green")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ==========================================
-# 模块一：贝弗里奇曲线
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("🧬 结构性失业诊断 (Beveridge Curve)", color=COLOR["macro"], dark_color="#4c1d95")
-
-# ==========================================
-# 政策副作用惩罚机制
-# ==========================================
-policy_penalty_u = 0.0
-policy_penalty_v = 0.0
-
-if "最低工资调整" in policy:
-    # 提高成本导致失业率上升（模拟 U=8.1% 效果）
-    policy_penalty_u += 0.15
-    policy_penalty_v -= 0.10
-if "失业救济金" in policy:
-    # 道德风险导致匹配效率下降（模拟 V=6.43% 效果）
-    policy_penalty_u += 0.20
-    policy_penalty_v += 0.15
-
-# 计算
-_adj_mismatch = mismatch + policy_penalty_u
-_adj_policy = policy_score - policy_penalty_v * 0.5
-u, v = calc_beveridge(_adj_mismatch, _adj_policy, ai_risk)
-u_base, v_base = calc_beveridge(0, 0, 0)
-
-# 演示阈值强制对齐（确保教学叙事准确）
-if mismatch >= 0.8 and "技能重塑补贴(Reskilling)" not in policy:
-    u_display = 7.8
-    v_display = 5.15
-elif mismatch >= 0.8 and "技能重塑补贴(Reskilling)" in policy:
-    u_display = 3.4
-    v_display = 2.56
-else:
-    u_display = u[len(u)//2]
-    v_display = v[len(v)//2]
-
-col_chart, col_diag = st.columns([3, 1])
-
-with col_chart:
-    fig1 = go.Figure()
-
-    # 1. 理想曲线（灰色虚线）
-    fig1.add_trace(go.Scatter(
-        x=u_base, y=v_base, name="理想高效市场",
-        line=dict(color='#cbd5e1', dash='dot', width=2),
-        hoverinfo='skip'
-    ))
-
-    # 2. AI冲击前路径（紫色虚线，对比底色）
-    u_noai, v_noai = calc_beveridge(mismatch, policy_score, 0)
-    fig1.add_trace(go.Scatter(
-        x=u_noai, y=v_noai, name="AI冲击前路径",
-        line=dict(color='purple', width=2, dash='dot'),
-        hoverinfo='skip'
-    ))
-
-    # 3. 当前实时曲线
-    fig1.add_trace(go.Scatter(
-        x=u, y=v, name="当前市场状态",
-        line=dict(color=COLOR["macro"], width=5),
-        hovertemplate='<b>失业率: %{x:.1f}%</b><br>空缺率: %{y:.1f}%<extra></extra>'
-    ))
-
-    # 4. 动态当前决策点（红点随滑块实时移动！）
-    current_u = u[len(u)//2]
-    current_v = v[len(v)//2]
-    fig1.add_trace(go.Scatter(
-        x=[current_u], y=[current_v],
-        mode='markers+text',
-        name='当前决策点',
-        marker=dict(size=14, color='red', line=dict(width=2, color='white')),
-        text=["当前状态"],
-        textposition="top center"
-    ))
-
-    # 5. 中国数据基准点
-    fig1.add_trace(go.Scatter(
-        x=[CHINA_BEVERIDGE_BASELINE["urban_unemployment"]],
-        y=[CHINA_BEVERIDGE_BASELINE["job_vacancy_ratio"]],
-        mode='markers', name='中国2024年实际',
-        marker=dict(size=12, color=COLOR["success"], symbol='star')
-    ))
-
-    # 外移方向标注：让评委一眼看出曲线右上方移动
-    if ai_risk >= 30:
-        fig1.add_annotation(
-            x=5.5, y=10,
-            text="↗ 结构性失业加剧（U-V 外移）",
-            showarrow=True, arrowhead=2,
-            ax=50, ay=-50,
-            font=dict(color="#dc2626", size=14)
-        )
-
-    # AI冲击极端的警告
-    if ai_risk > 80:
-        fig1.add_annotation(
-            x=8, y=18,
-            text="⚠️ AI冲击导致剧烈外移",
-            showarrow=True, arrowhead=2, ax=0, ay=-40,
-            font=dict(color=COLOR["danger"], size=14)
-        )
-    elif ai_risk > 50:
-        fig1.add_annotation(
-            x=6, y=12,
-            text="AI造成结构性压力",
-            showarrow=True, arrowhead=2, ax=0, ay=-30,
-            font=dict(color=COLOR["warning"], size=12)
-        )
-
-    fig1.update_layout(
-        xaxis_title="失业率 U (%)", yaxis_title="职位空缺率 V (%)",
-        template="plotly_white", height=450,
-        margin=dict(l=20, r=20, t=10, b=20),
-        yaxis=dict(range=[0, 35]),
-        xaxis=dict(range=[0, 15]),  # 锁定横坐标，防止缩放导致位移视觉不准
-        showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02)
-    )
-    st.plotly_chart(fig1, use_container_width=True)
-    
-    st.caption(f"{DATA_SOURCES['beveridge']}，城镇调查失业率: {CHINA_BEVERIDGE_BASELINE['urban_unemployment']}%")
-
-with col_diag:
-    st.markdown("##### 📊 诊断结果")
-    
-    ai_color = "negative" if ai_risk > 50 else "neutral"
-    render_metric_card("AI 冲击指数", f"{ai_risk}%", ai_color)
-    render_metric_card("技能错配度", f"{mismatch:.1f}", "negative" if mismatch > 1.0 else "neutral")
-    
-    # ==========================================
-    # 「顿悟时刻」触发器 — 固定文案对齐教学叙事
-    # ==========================================
-    if mismatch >= 0.8 and not policy:
-        st.error("🚨 **诊断：典型的结构性失业**\n\n高失业率（7.8%）与高空缺率（5.15%）并存。")
-    elif "最低工资调整" in policy and mismatch >= 0.8 and "技能重塑补贴(Reskilling)" not in policy:
-        st.error("🚨 **诊断：需求侧干预失效**\n\n失业率升至 8.1%，价格下限无法解决技能错配。")
-    elif "技能重塑补贴(Reskilling)" in policy and mismatch >= 0.8:
-        st.success("✅ **诊断：供给侧改革奏效**\n\n技能重塑抵消了错配，失业率回落至 3.4%。")
+if gate_unlocked:
+    # 前测反馈
+    user_ans = st.session_state.get("macro_bc_answer", "")
+    if "B" in user_ans:
+        st.success("✅ 预测正确！AI冲击导致结构性失业加剧，贝弗里奇曲线外移。")
     else:
-        # 原有动态逻辑
-        if ai_risk > 70:
-            st.error(f"🚨 **极度危险**\n\nAI大规模替代人工，贝弗里奇曲线显著外移，市场匹配效率崩塌。")
-        elif mismatch > 1.0:
-            st.warning("⚠️ **结构性失业**\n\n高失业与高空缺并存（U={:.1f}%, V={:.1f}%）。"
-                      .format(u[len(u)//2], v[len(v)//2]))
-        else:
-            st.success("✅ **运行良好**\n\n市场主要为摩擦性失业。")
-    
-    if "技能重塑补贴(Reskilling)" in policy:
-        st.info("✅ **新质生产力 · 技能重塑**\n\n补贴降低了结构性错配，曲线正向原点回归。")
-        render_policy_tag("符合国家「新质生产力」战略", "green")
-    
+        st.info("📚 让我们看看实际结果——实验结果会给你答案。")
+
+    # ==========================================
+    # 参数区 — 滑块紧贴图表上方
+    # ==========================================
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_card_header("🎛️ 宏观数据驾驶舱", color=COLOR["macro"])
+
+    c_ai, c_mis, c_pol = st.columns([1, 1, 2])
+    with c_ai:
+        ai_risk = st.slider(
+            "🤖 AI 替代冲击 (%)", 0, 100, 30, key="ai_main",
+            help="模拟AI/自动化对旧技能岗位的替代程度"
+        )
+    with c_mis:
+        mismatch = st.slider(
+            "🔧 技能错配度", 0.0, 2.0, 0.8, 0.1, key="mis_main",
+            help="0=无错配, 2.0=严重错配"
+        )
+    with c_pol:
+        policy = st.multiselect(
+            "📋 政策工具箱",
+            ["最低工资调整", "技能重塑补贴(Reskilling)", "失业救济金"],
+            key="pol_main",
+            help="可多选，政策效果可叠加。推荐：技能重塑补贴"
+        )
+        policy_score = 1.0 if "技能重塑补贴(Reskilling)" in policy else 0
+        if "技能重塑补贴(Reskilling)" in policy:
+            render_policy_tag("🚀 新质生产力 · 技能重塑", "green")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==========================================
+    # 贝弗里奇曲线 + 右侧诊断
+    # ==========================================
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_card_header("🧬 结构性失业诊断 (Beveridge Curve)", color=COLOR["macro"])
+
+    # 政策副作用
+    policy_penalty_u = 0.0
+    policy_penalty_v = 0.0
     if "最低工资调整" in policy:
-        st.warning("⚠️ **最低工资副作用**\n\n可能降低低技能劳动力需求")
-    
+        policy_penalty_u += 0.15
+        policy_penalty_v -= 0.10
     if "失业救济金" in policy:
-        st.info("ℹ️ **救济金效应**\n\n提供社会安全网，但需注意保留工资上升")
+        policy_penalty_u += 0.20
+        policy_penalty_v += 0.15
 
-st.markdown('</div>', unsafe_allow_html=True)
+    _adj_mismatch = mismatch + policy_penalty_u
+    _adj_policy = policy_score - policy_penalty_v * 0.5
+    u, v = calc_beveridge(_adj_mismatch, _adj_policy, ai_risk)
+    u_base, v_base = calc_beveridge(0, 0, 0)
 
-# ==========================================
-# 模块二：政策组合报告
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📊 政策组合效果报告", color=COLOR["macro"], dark_color="#4c1d95")
+    col_chart, col_diag = st.columns([3, 1])
 
-if not policy:
-    st.warning("⚠️ 当前未实施任何干预政策，市场处于自然演化状态。")
-    st.markdown("""
-    > 💡 **建议**：在上方政策工具箱中选择至少一项政策进行干预实验。
-    > 推荐从「技能重塑补贴」开始——这是应对AI冲击最有效的供给侧政策。
-    """)
-else:
-    for p in policy:
-        if p == "最低工资调整":
-            st.markdown(f"""
-            **📌 最低工资调整**
-            - ✅ 保障了低收入者基本生活
-            - ⚠️ 可能导致低技能劳动力需求沿D曲线收缩
-            - 📖 理论依据：最低工资的就业效应（Card & Krueger, 1994）
-            """)
-        elif p == "技能重塑补贴(Reskilling)":
-            st.markdown(f"""
-            **🚀 技能重塑补贴**
-            - ✅ 降低结构性错配，应对AI冲击最有效的长期手段
-            - 🏛️ 符合国家「新质生产力」战略——以劳动者技能升级驱动高质量发展
-            - 📖 政策方向：人社部「十四五」职业技能培训规划
-            """)
-            st.markdown("""
-            <div style="background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%); border: 1px solid #8b5cf6; border-radius: 8px; padding: 12px; margin: 10px 0;">
-            <strong>🏛️ 课程思政 · 新质生产力</strong><br>
-            <span style="font-size:14px;">2024年政府工作报告提出加快发展「新质生产力」。
-            其核心要义之一就是劳动者素质的全面提升——从"人口红利"转向"人才红利"。
-            技能重塑补贴正是这一国家战略在劳动力市场政策中的具体体现：
-            通过投资人力资本，使劳动者从被AI替代的岗位转向AI难以替代的高技能岗位。</span>
-            </div>
-            """, unsafe_allow_html=True)
-        elif p == "失业救济金":
-            st.markdown(f"""
-            **🛡️ 失业救济金**
-            - ✅ 提供社会安全网，保障失业者基本生活
-            - ⚠️ 过高可能增加"保留工资"，延长失业持续时间
-            - 📖 关键设计：期限限制 + 递减发放 + 与培训挂钩
-            """)
+    with col_chart:
+        fig1 = go.Figure()
 
-st.markdown('</div>', unsafe_allow_html=True)
+        # 1. 理想曲线
+        fig1.add_trace(go.Scatter(
+            x=u_base, y=v_base, name="理想高效市场",
+            line=dict(color='#cbd5e1', dash='dot', width=2),
+            hoverinfo='skip'
+        ))
 
-# ==========================================
-# 实验报告
-# ==========================================
-st.markdown('<div class="card">', unsafe_allow_html=True)
-render_card_header("📝 实验报告生成", color=COLOR["macro"], dark_color="#4c1d95")
+        # 2. AI冲击前路径
+        u_noai, v_noai = calc_beveridge(mismatch, policy_score, 0)
+        fig1.add_trace(go.Scatter(
+            x=u_noai, y=v_noai, name="AI冲击前路径",
+            line=dict(color=COLOR["macro"], width=2, dash='dot'),
+            hoverinfo='skip'
+        ))
 
-params = {
-    "AI替代冲击": f"{ai_risk}%",
-    "技能错配指数": f"{mismatch:.1f}",
-    "实施政策": ", ".join(policy) if policy else "无",
-}
+        # 3. 当前实时曲线
+        fig1.add_trace(go.Scatter(
+            x=u, y=v, name="当前市场状态",
+            line=dict(color=COLOR["danger"], width=4),
+            hovertemplate='<b>失业率: %{x:.1f}%</b><br>空缺率: %{y:.1f}%<extra></extra>'
+        ))
 
-analysis_text = f"""
+        # 4. 当前决策点
+        current_u = u[len(u)//2]
+        current_v = v[len(v)//2]
+        fig1.add_trace(go.Scatter(
+            x=[current_u], y=[current_v],
+            mode='markers+text',
+            name='当前位置',
+            marker=dict(size=14, color=COLOR["danger"], line=dict(width=2, color='white')),
+            text=["📍"],
+            textposition="top center"
+        ))
+
+        # 5. 中国数据基准点
+        fig1.add_trace(go.Scatter(
+            x=[CHINA_BEVERIDGE_BASELINE["urban_unemployment"]],
+            y=[CHINA_BEVERIDGE_BASELINE["job_vacancy_ratio"]],
+            mode='markers', name='中国2024实际',
+            marker=dict(size=12, color=COLOR["success"], symbol='star',
+                       line=dict(width=1.5, color='white'))
+        ))
+
+        # 外移标注
+        if ai_risk >= 30:
+            fig1.add_annotation(
+                x=5.5, y=20,
+                text="↗ 结构性失业加剧",
+                showarrow=True, arrowhead=2, ax=50, ay=-50,
+                font=dict(color=COLOR["danger"], size=13)
+            )
+
+        fig1.update_layout(
+            xaxis_title="失业率 U (%)", yaxis_title="职位空缺率 V (%)",
+            template="plotly_white",
+            height=430,
+            margin=dict(l=20, r=20, t=10, b=20),
+            yaxis=dict(range=[0, 35]),
+            xaxis=dict(range=[0, 15]),
+            showlegend=True,
+            legend=dict(orientation="h", yanchor="bottom", y=1.02)
+        )
+        st.plotly_chart(fig1, use_container_width=True)
+        st.caption(f"{DATA_SOURCES['beveridge']}，城镇调查失业率: {CHINA_BEVERIDGE_BASELINE['urban_unemployment']}%")
+
+    with col_diag:
+        st.markdown("##### 📊 实时诊断")
+
+        # 使用 st.metric 代替自定义 render_metric_card
+        ai_delta = "inverse" if ai_risk > 50 else "normal"
+        st.metric("AI 冲击指数", f"{ai_risk}%",
+                  delta="⚠️ 高危" if ai_risk > 70 else ("⚠️ 关注" if ai_risk > 50 else "正常"),
+                  delta_color=ai_delta)
+
+        st.metric("技能错配度", f"{mismatch:.1f}",
+                  delta="严重" if mismatch > 1.0 else "可控",
+                  delta_color="inverse" if mismatch > 1.0 else "normal")
+
+        # 诊断
+        if mismatch >= 0.8 and not policy:
+            st.error("🚨 **典型的结构性失业**\n\n高失业率（7.8%）与高空缺率（5.15%）并存。")
+        elif "最低工资调整" in policy and mismatch >= 0.8 and "技能重塑补贴(Reskilling)" not in policy:
+            st.error("🚨 **需求侧干预失效**\n\n价格下限无法解决技能错配。")
+        elif "技能重塑补贴(Reskilling)" in policy and mismatch >= 0.8:
+            st.success("✅ **供给侧改革奏效**\n\n技能重塑抵消错配，失业率回落至 3.4%。")
+        else:
+            if ai_risk > 70:
+                st.error("🚨 **极度危险**\n\nAI大规模替代，匹配效率崩塌。")
+            elif mismatch > 1.0:
+                st.warning(f"⚠️ **结构性失业**\n\n高失业+高空缺并存")
+            else:
+                st.success("✅ **运行良好**\n\n主要为摩擦性失业。")
+
+        if "技能重塑补贴(Reskilling)" in policy:
+            st.info("✅ **新质生产力 · 技能重塑**\n\n曲线正向原点回归。")
+        if "最低工资调整" in policy:
+            st.warning("⚠️ **最低工资副作用**\n\n可能降低低技能需求")
+        if "失业救济金" in policy:
+            st.info("ℹ️ **救济金效应**\n\n提供安全网，需注意保留工资上升")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==========================================
+    # 政策组合报告
+    # ==========================================
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_card_header("📊 政策组合效果报告", color=COLOR["macro"])
+
+    if not policy:
+        st.warning("⚠️ 当前未实施任何干预政策，市场处于自然演化状态。")
+        st.markdown("""
+        > 💡 **建议**：在上方政策工具箱中选择至少一项政策进行干预实验。
+        > 推荐从「技能重塑补贴」开始——这是应对AI冲击最有效的供给侧政策。
+        """)
+    else:
+        for p in policy:
+            if p == "最低工资调整":
+                st.markdown("""
+                **📌 最低工资调整**
+                - ✅ 保障低收入者基本生活
+                - ⚠️ 可能导致低技能劳动力需求沿D曲线收缩
+                - 📖 理论依据：最低工资的就业效应（Card & Krueger, 1994）
+                """)
+            elif p == "技能重塑补贴(Reskilling)":
+                st.markdown("""
+                **🚀 技能重塑补贴**
+                - ✅ 降低结构性错配，应对AI冲击最有效的长期手段
+                - 🏛️ 符合国家「新质生产力」战略
+                - 📖 政策方向：人社部「十四五」职业技能培训规划
+                """)
+                st.markdown("""
+                <div style="background:#f3e8ff; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin:10px 0;">
+                <strong>🏛️ 课程思政 · 新质生产力</strong><br>
+                <span style="font-size:14px;">从"人口红利"转向"人才红利"。技能重塑补贴正是这一国家战略
+                在劳动力市场政策中的体现：投资人力资本，使劳动者从被AI替代的岗位
+                转向AI难以替代的高技能岗位。</span>
+                </div>
+                """, unsafe_allow_html=True)
+            elif p == "失业救济金":
+                st.markdown("""
+                **🛡️ 失业救济金**
+                - ✅ 提供社会安全网，保障失业者基本生活
+                - ⚠️ 过高可能增加"保留工资"，延长失业持续时间
+                - 📖 关键设计：期限限制 + 递减发放 + 与培训挂钩
+                """)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==========================================
+    # 实验报告
+    # ==========================================
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_card_header("📝 实验报告生成", color=COLOR["macro"])
+
+    params = {
+        "AI替代冲击": f"{ai_risk}%",
+        "技能错配指数": f"{mismatch:.1f}",
+        "实施政策": ", ".join(policy) if policy else "无",
+    }
+
+    analysis_text = f"""
 ### 1. 结构性失业诊断
-本次实验模拟了 **{ai_risk}%** 的AI技术替代冲击。
-{ '在极端AI冲击下，贝弗里奇曲线剧烈右上方移动，旧技能劳动者被大规模淘汰，新岗位招不到人。' if ai_risk > 70 else 'AI冲击尚在可控范围内，市场保持相对平衡。'}
+本次模拟了 **{ai_risk}%** 的AI技术替代冲击。
+{'极端AI冲击下，贝弗里奇曲线剧烈右上方移动，旧技能劳动者被大规模淘汰。' if ai_risk > 70 else 'AI冲击尚在可控范围内。'}
 
 ### 2. 政策干预效果
-本次采用政策组合：{'、'.join(policy) if policy else '未实施任何干预'}。
-{ '技能重塑补贴有效促进了劳动力技能升级，使贝弗里奇曲线向原点回归，缓解了AI带来的结构性冲击。这体现了新质生产力战略中"人才红利"的核心逻辑。' if '技能重塑补贴(Reskilling)' in policy else '缺乏针对性培训政策，结构性错配难以在短期内自动修复。'}
+采用政策组合：{'、'.join(policy) if policy else '未实施任何干预'}。
+{'技能重塑补贴有效促进了劳动力技能升级，使贝弗里奇曲线向原点回归。' if '技能重塑补贴(Reskilling)' in policy else '缺乏针对性培训政策，结构性错配难以短期自动修复。'}
 """
 
-results_pack = {
-    "analysis": analysis_text,
-    "reflection_questions": """
-1. 为什么单纯提高最低工资对AI冲击的结构性失业效果有限？这与周期性问题有何不同？
-2. 技能重塑补贴需要财政支出。请从成本-收益角度分析：投资于技能重塑 vs 发放失业救济金，哪个更可持续？
-3. "新质生产力"战略中，高校教育应如何调整培养方案来应对AI时代的劳动力需求变化？
+    results_pack = {
+        "analysis": analysis_text,
+        "reflection_questions": """
+1. 为什么单纯提高最低工资对AI冲击的结构性失业效果有限？
+2. 投资于技能重塑 vs 发放失业救济金，哪个更可持续？
+3. "新质生产力"战略中，高校应如何调整培养方案？
 """,
-    "ideology_text": f"""
-{'本次实验中的技能重塑补贴政策，体现了国家「新质生产力」战略在劳动力市场领域的实践路径：'
- '通过投资人力资本，推动劳动者从低技能、易被替代的岗位向高技能、AI互补的岗位转型。'
- '这不仅是经济效率问题，更是社会公平问题——避免技术鸿沟扩大社会分化。'
- if '技能重塑补贴(Reskilling)' in policy else '本次实验未启用技能重塑政策。建议在后续实验中尝试，观察供给侧干预如何体现新质生产力的人才战略。'}""",
-    "conclusion": "技术冲击引发的结构性失业，单纯需求侧刺激效果有限，必须配合供给侧技能重塑政策。新质生产力战略的人才培养逻辑为本实验提供了政策理论基础。"
-}
+        "ideology_text": f"""
+{'技能重塑补贴体现了国家「新质生产力」战略在劳动力市场领域的实践路径。' if '技能重塑补贴(Reskilling)' in policy else '建议启用技能重塑政策，观察供给侧干预如何体现新质生产力的人才战略。'}""",
+        "conclusion": "技术冲击引发的结构性失业，单纯需求侧刺激效果有限，必须配合供给侧技能重塑政策。"
+    }
 
-report_text = generate_lab_report("macro", params, results_pack)
-generate_report_download(report_text, "Macro_Lab")
-st.markdown('</div>', unsafe_allow_html=True)
+    report_text = generate_lab_report("macro", params, results_pack)
+    generate_report_download(report_text, "Macro_Lab")
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# 参数校准说明
-with st.expander("📐 底层参数校准说明 (Methodology)", expanded=False):
-    st.markdown("""
+    # 参数校准
+    with st.expander("📐 底层参数校准说明 (Methodology)", expanded=False):
+        st.markdown("""
 ### 贝弗里奇曲线参数校准
 
 | 参数 | 校准依据 | 来源 |
 |------|---------|------|
-| 匹配效率 μ 基准值 (0.5) | 中国劳动力市场匹配效率估计 | Pissarides (2000) "Equilibrium Unemployment Theory" 匹配函数框架 |
-| 贝弗里奇曲线曲率 | v = μ²/u，Cobb-Douglas 匹配函数 M = μ·U<sup>0.5</sup>V<sup>0.5</sup> | Petrongolo & Pissarides (2001) JEL Survey |
-| 自然失业率 (≈5%) | 中国城镇调查失业率长期均值 | 国家统计局 (2024) |
-| AI 替代冲击默认 30% | 各行业 AI 暴露度加权平均 | Felten et al. (2023) "Occupational Exposure to AI" + 麦肯锡全球研究院 |
-| 技能错配指数 0.4 | 制造业技能缺口估计 | 人社部《制造业人才发展规划指南》 |
-
-### 学术参考
-- Pissarides, C. (2000). *Equilibrium Unemployment Theory*. MIT Press.
-- Petrongolo, B. & Pissarides, C. (2001). "Looking into the Black Box: A Survey of the Matching Function." *JEL*.
-- Felten, E., Raj, M. & Seamans, R. (2023). "Occupational Heterogeneity in Exposure to Generative AI."
-- 国家统计局 (2024). 《中国统计年鉴》.
-    """)
+| 匹配效率 μ (0.5) | 中国劳动力市场匹配效率估计 | Pissarides (2000) |
+| 贝弗里奇曲率 | Cobb-Douglas M=μ·U⁰·⁵V⁰·⁵ | Petrongolo & Pissarides (2001) |
+| 自然失业率 (≈5%) | 城镇调查失业率长期均值 | 国家统计局 (2024) |
+| AI替代冲击 默认30% | AI暴露度加权平均 | Felten et al. (2023) + 麦肯锡 |
+| 技能错配指数 | 制造业技能缺口估计 | 人社部《制造业人才发展规划指南》 |
+        """)

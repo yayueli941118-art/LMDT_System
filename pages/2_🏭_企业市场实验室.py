@@ -11,24 +11,22 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import (
     COLOR, SHARED_CSS,
-    render_page_banner, render_metric_card, render_card_header,
+    render_page_banner, render_card_header,
     render_challenge_banner, render_predict_verify,
     calc_derived_demand, calc_ces_demand,
     generate_lab_report, generate_report_download,
 )
 
 st.set_page_config(page_title="企业市场实验室", page_icon="🏭", layout="wide")
-st.markdown(SHARED_CSS(color=COLOR["market"], dark="#065f46", light="#10b981"), unsafe_allow_html=True)
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
 render_page_banner("🏭", "企业市场实验室", "Market Lab", "green")
 
 # ==========================================
-# 侧边栏
+# 侧边栏 — 仅保留全局重置 + 导航
 # ==========================================
 with st.sidebar:
-    st.header("⚙️ 全局设置")
-    use_ces = st.toggle("🧪 启用CES高级模型", value=False,
-                        help="关闭使用简单反比模型，开启使用CES（替代弹性可调）")
+    st.header("⚙️ 全局控制")
     
     def _reset_market():
         for key in list(st.session_state.keys()):
@@ -41,6 +39,12 @@ with st.sidebar:
     st.divider()
     st.markdown("##### 📎 深度模块")
     st.page_link("pages/2b_🏗️_要素配置沙盘.py", label="🏗️ 要素配置沙盘 (替代vs规模效应) →", use_container_width=True)
+
+# ==========================================
+# 模型选择（移到主区域）
+# ==========================================
+use_ces = st.toggle("🧪 启用CES高级模型", value=False,
+                    help="关闭使用简单反比模型，开启使用CES（替代弹性可调）")
 
 # ==========================================
 # 挑战模式
@@ -149,18 +153,18 @@ with col_chart:
 
 with col_info:
     st.markdown("##### 📊 关键参数")
-    render_metric_card("资本存量", str(capital), "neutral")
-    render_metric_card("替代弹性 σ", f"{sigma:.1f}" if use_ces else "N/A (简单模型)", "neutral")
+    st.metric("资本存量", str(capital))
+    st.metric("替代弹性 σ", f"{sigma:.1f}" if use_ces else "N/A (简单模型)")
     
     if tech_type == "劳动替代型":
         st.error("📉 **预警**\n\n机器正在替代人工，需求曲线左移。")
-        render_metric_card("需求状态", "收缩", "negative")
+        st.metric("需求状态", "收缩", delta_color="inverse")
     elif tech_type == "劳动互补型":
         st.success("📈 **繁荣**\n\n技术进步增加劳动边际产出。")
-        render_metric_card("需求状态", "扩张", "positive")
+        st.metric("需求状态", "扩张", delta_color="normal")
     else:
         st.info("⚖️ **平稳**\n\n技术对劳动需求无显著偏向。")
-        render_metric_card("需求状态", "中性", "neutral")
+        st.metric("需求状态", "中性", delta_color="off")
 
 st.markdown('</div>', unsafe_allow_html=True)
 

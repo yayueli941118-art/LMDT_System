@@ -1,6 +1,6 @@
 """
 ✈️ 职场迁徙决策仿真 — 第五章 劳动力流动
-NPV动态累积+制度壁垒+中国政策杠杆+情景对比+双线竞速可视化
+NPV动态累积+制度壁垒+中国政策杠杆+情景对比
 """
 
 import streamlit as st
@@ -9,81 +9,12 @@ import plotly.graph_objects as go
 import sys, os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from shared import CHINA_MIGRANT_WAGE_2024, DATA_SOURCES, SCHOOL_NAME, AUTHOR_NAME
+from shared import COLOR, SHARED_CSS, CHINA_MIGRANT_WAGE_2024, DATA_SOURCES, SCHOOL_NAME, AUTHOR_NAME, render_page_banner
 
 st.set_page_config(page_title="迁移决策仿真", page_icon="✈️", layout="wide")
+st.markdown(SHARED_CSS(), unsafe_allow_html=True)
 
-# ==========================================
-# 赛博暗色 UI
-# ==========================================
-st.markdown("""
-<style>
-    .stApp { background-color: #0b0f19 !important; }
-    section[data-testid="stSidebar"] {
-        background-color: #090d16 !important;
-        border-right: 1px solid rgba(139, 92, 246, 0.1) !important;
-    }
-    .stApp, .stApp p, .stApp span, .stApp div,
-    .stApp li, .stApp strong, .stApp b,
-    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, .stApp h6,
-    div[data-testid="stMarkdownContainer"],
-    div[data-testid="stMarkdownContainer"] * {
-        color: #e2e8f0 !important;
-    }
-    .stMarkdown table th, .stMarkdown table td {
-        border-color: rgba(148, 163, 184, 0.3) !important; color: #cbd5e1 !important;
-    }
-    section[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-    div[data-testid="stSlider"] label, div[data-testid="stRadio"] label {
-        color: #a78bfa !important; font-weight: 600 !important;
-    }
-    .tech-card {
-        background: linear-gradient(145deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
-        border: 1px solid rgba(139, 92, 246, 0.15) !important;
-        box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.6) !important;
-        backdrop-filter: blur(12px);
-        border-radius: 12px; padding: 24px; margin-bottom: 24px;
-    }
-    .cyber-header {
-        font-size: 20px; font-weight: 700; color: #ffffff !important;
-        margin-bottom: 20px; display: flex; align-items: center;
-    }
-    .cyber-header::before {
-        content: ''; display: inline-block; width: 6px; height: 24px;
-        background: #8b5cf6; margin-right: 12px; border-radius: 3px;
-        box-shadow: 0 0 8px #8b5cf6;
-    }
-    .decision-green {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.1) 100%);
-        border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin: 10px 0;
-    }
-    .decision-red {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%);
-        border: 2px solid #ef4444; border-radius: 12px; padding: 20px; margin: 10px 0;
-    }
-    .decision-yellow {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
-        border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 10px 0;
-    }
-    .block-container { padding-top: 2rem !important; padding-bottom: 3rem !important; max-width: 98% !important; }
-    header {visibility: hidden;} #MainMenu {visibility: hidden;} footer {visibility: hidden;}
-</style>
-""", unsafe_allow_html=True)
-
-# ==========================================
-# Banner
-# ==========================================
-st.markdown(f"""
-<div style="margin-bottom: 20px;">
-    <h1 style="color: #ffffff; font-weight: 900; margin-bottom: 5px;">✈️ 职场迁徙决策仿真</h1>
-    <h4 style="color: #a78bfa; font-weight: 600; letter-spacing: 1px;">
-        第五章 劳动力流动 — 去大城市闯荡，还是留在家乡？
-    </h4>
-    <p style="color: #64748b; font-size: 14px; margin-top: 4px;">
-        {SCHOOL_NAME} · 课程负责人：{AUTHOR_NAME} | NPV 净现值模型
-    </p>
-</div>
-""", unsafe_allow_html=True)
+render_page_banner("✈️", "职场迁徙决策仿真", "第五章 劳动力流动 · NPV净现值模型", "purple")
 
 # ==========================================
 # 三种人生情景
@@ -122,7 +53,7 @@ with st.expander("📖 三种人生，三种选择（点击展开）", expanded=
 # 预测脚手架
 # ==========================================
 if "migrate_pred_done" not in st.session_state:
-    st.markdown("<div class='tech-card' style='border-color: rgba(168, 85, 247, 0.3) !important;'>", unsafe_allow_html=True)
+    st.markdown("<div class='card' style='border: 2px solid #8b5cf6;'>", unsafe_allow_html=True)
     st.markdown("##### 🔮 先判断：直觉 vs 模型")
     pred_m = st.radio(
         "**你认为，什么因素对「是否去大城市」的决策影响最大？**",
@@ -147,8 +78,8 @@ else:
 col_ctrl, col_graph = st.columns([1, 2.2])
 
 with col_ctrl:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-    st.markdown("<div class='cyber-header'>🧭 你的迁徙参数</div>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card-header'>🧭 你的迁徙参数</div>", unsafe_allow_html=True)
     
     st.markdown("**💰 收入差**")
     w_home = st.slider("家乡月薪 (k)", 2, 20, 5, key="w_home")
@@ -160,7 +91,8 @@ with col_ctrl:
     cost_rent = st.slider("额外房租/年 (k)", 0, 80, 36, 5, key="cost_rent",
                          help="城市房租减去家乡住房成本")
     cost_living = st.slider("额外生活开销/年 (k)", 0, 40, 12, 2, key="cost_living",
-                            help="餐饮/交通/社交等城市溢价")
+                           help="餐饮/交通/社交等城市溢价")
+    annual_net = (w_city - w_home) * 12 - cost_rent - cost_living
     
     st.markdown("---")
     st.markdown("**🚧 制度壁垒（中国特色）**")
@@ -197,113 +129,86 @@ with col_ctrl:
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# NPV 计算 (双线累积竞速模型)
+# NPV 计算
 # ==========================================
 t_vec = np.arange(1, remain_years + 1)
-discount_rate = 0.05
 
-# 1. 留在家乡的资产累积
-annual_home = w_home * 12
-flow_home = np.full(remain_years, annual_home)
-cum_home = np.cumsum(flow_home / ((1 + discount_rate) ** t_vec))
-
-# 2. 迁徙到大城市的资产累积
 annual_benefit = (w_city - w_home) * 12 - cost_rent - cost_living - hukou_cost
-annual_city_net = w_city * 12 - cost_rent - cost_living - hukou_cost
-flow_city = np.full(remain_years, annual_city_net)
-flow_city[0] += talent_subsidy  # 第一年拿补贴/安家费
-cum_city = np.cumsum(flow_city / ((1 + discount_rate) ** t_vec))
+net_flow = np.full(remain_years, annual_benefit)
+net_flow[0] += talent_subsidy
 
-# 3. 计算差距与盈亏平衡点 (NPV 本质上就是这两条线的差值)
-cum_npv = cum_city - cum_home
+discount_rate = 0.05
+cum_npv = np.cumsum(net_flow / ((1 + discount_rate) ** t_vec))
+
 final_npv = cum_npv[-1]
-
-# 判断哪一年大城市的累计财富 > 家乡的累计财富
-breakeven_arr = np.where(cum_city > cum_home)[0]
-if len(breakeven_arr) > 0 and final_npv > 0:
-    breakeven_year = breakeven_arr[0] + 1
-else:
-    breakeven_year = None
+breakeven_arr = np.where(cum_npv > 0)[0]
+breakeven_year = breakeven_arr[0] + 1 if len(breakeven_arr) > 0 else None
 
 # ==========================================
-# Plotly 可视化 (双线竞速图)
+# Plotly 可视化
 # ==========================================
 fig = go.Figure()
 
-# 线条 A：留在家乡轨迹 (平缓基准线)
-fig.add_trace(go.Scatter(
-    x=t_vec, y=cum_home,
-    mode='lines',
-    name='🏡 留在家乡累计财富',
-    line=dict(color='#94a3b8', width=3, dash='dash'),
-    hovertemplate='第%{x}年<br>家乡累计: %{y:.1f}k<extra></extra>'
+colors_bar = [COLOR["danger"] if v < 0 else COLOR["success"] for v in cum_npv]
+fig.add_trace(go.Bar(
+    x=t_vec, y=cum_npv, marker_color=colors_bar,
+    name="累计 NPV",
+    hovertemplate='第%{x}年<br>累计NPV: %{y:+.1f}k<br>%{customdata}<extra></extra>',
+    customdata=[f'{"✅ 已回本！" if v > 0 else "⏳ 尚未回本"}' for v in cum_npv]
 ))
 
-# 线条 B：迁徙大城市轨迹
-fig.add_trace(go.Scatter(
-    x=t_vec, y=cum_city,
-    mode='lines',
-    name='🏙️ 迁徙大城市累计财富',
-    line=dict(color='#a855f7', width=4),
-    fill='tonexty', # 核心魔法：填充两条线之间的差值区域
-    fillcolor='rgba(16, 185, 129, 0.15)' if final_npv > 0 else 'rgba(239, 68, 68, 0.15)',
-    hovertemplate='第%{x}年<br>城市累计: %{y:.1f}k<extra></extra>'
-))
+fig.add_hline(y=0, line_dash="solid", line_color="#64748b", line_width=1)
 
-# 标注盈亏平衡交叉点
-if breakeven_year and breakeven_year <= remain_years:
-    fig.add_vline(x=breakeven_year, line_dash="dot", line_color="#10b981", opacity=0.6)
-    # 如果不是第一年就直接碾压，则标出明显的交叉点
-    if breakeven_year > 1:
-        fig.add_trace(go.Scatter(
-            x=[breakeven_year], y=[cum_city[breakeven_year - 1]],
-            mode='markers+text', name='🌟 回本交叉点',
-            marker=dict(size=14, color='#10b981', line=dict(width=3, color='white')),
-            text=["命运交叉点 (反超)"], textposition="top left",
-            textfont=dict(color="#10b981", size=13, weight="bold"),
-            hovertemplate=f'<b>交叉反超</b><br>第 {breakeven_year} 年城市财富超过家乡<extra></extra>'
-        ))
+if breakeven_year:
+    fig.add_vline(
+        x=breakeven_year, line_dash="dash", line_color=COLOR["success"], line_width=2,
+        annotation_text=f"📌 回本！第 {breakeven_year} 年",
+        annotation_font=dict(size=14, color=COLOR["success"]),
+        annotation_position="top"
+    )
+    fig.add_trace(go.Scatter(
+        x=[breakeven_year], y=[cum_npv[breakeven_year - 1]],
+        mode='markers', name='盈亏平衡点',
+        marker=dict(size=16, color=COLOR["success"], symbol='star', line=dict(width=3, color='white')),
+        hovertemplate=f'<b>🌟 盈亏平衡</b><br>第 {breakeven_year} 年<br>NPV={cum_npv[breakeven_year-1]:.1f}k<extra></extra>'
+    ))
 
-# 尾部最终财富差距标注
 fig.add_annotation(
-    x=remain_years, y=(cum_city[-1] + cum_home[-1]) / 2,
-    text=f"最终差距 (NPV):<br><b>{final_npv:+.0f}k</b>",
+    x=remain_years * 0.7, y=final_npv * 0.85 if final_npv > 0 else final_npv * 0.5,
+    text=f"最终 NPV: <b>{final_npv:+.0f}k</b>",
     showarrow=False,
-    bgcolor="rgba(16, 185, 129, 0.9)" if final_npv > 0 else "rgba(239, 68, 68, 0.9)",
-    font=dict(color="white", size=13),
-    borderpad=6, bordercolor="white", borderwidth=1
+    font=dict(size=18, color=COLOR["success"] if final_npv > 0 else COLOR["danger"]),
+    bgcolor="rgba(255,255,255,0.9)", borderpad=8
 )
 
 fig.update_layout(
-    title="双城记：留守 vs 迁徙的财富累积竞速",
-    title_font=dict(size=16, color="#e2e8f0"),
-    xaxis_title="年份 (年)", yaxis_title="累计折现财富 (k)",
-    xaxis=dict(dtick=5, gridcolor="rgba(51, 65, 85, 0.3)"),
-    yaxis=dict(gridcolor="rgba(51, 65, 85, 0.3)"),
-    template="plotly_dark", 
-    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-    font=dict(color="#e2e8f0", size=13),
-    height=450, margin=dict(l=40, r=40, t=50, b=40),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(color="#e2e8f0")),
+    xaxis_title="年份", yaxis_title="累计净现值 NPV (k)",
+    xaxis=dict(dtick=5, gridcolor="rgba(0, 0, 0, 0.08)"),
+    yaxis=dict(gridcolor="rgba(0, 0, 0, 0.08)"),
+    template="plotly_white",
+    height=430, margin=dict(l=40, r=20, t=20, b=40),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     hovermode='x unified'
 )
 
 with col_graph:
-    st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
 # 决策输出
 # ==========================================
-st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-st.markdown("<div class='cyber-header'>⚖️ 迁徙决策诊断</div>", unsafe_allow_html=True)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<div class='card-header'>⚖️ 迁徙决策诊断</div>", unsafe_allow_html=True)
 
 col_d1, col_d2 = st.columns([3, 2])
 
 with col_d1:
     if final_npv > 0 and breakeven_year and breakeven_year <= remain_years // 2:
-        st.markdown("<div class='decision-green'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:#ecfdf5; border: 2px solid #10b981; border-radius: 12px; padding: 20px; margin: 10px 0;">
+        """, unsafe_allow_html=True)
         st.success(
             f"## ✅ 强烈建议迁徙\n\n"
             f"在 **{remain_years} 年**的职业生涯中，迁徙将为你带来 **{final_npv:+.0f}k** 的净收益。\n\n"
@@ -314,7 +219,9 @@ with col_d1:
         )
         st.markdown("</div>", unsafe_allow_html=True)
     elif final_npv > 0 and breakeven_year:
-        st.markdown("<div class='decision-yellow'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:#fffbeb; border: 2px solid #f59e0b; border-radius: 12px; padding: 20px; margin: 10px 0;">
+        """, unsafe_allow_html=True)
         st.warning(
             f"## ⚠️ 谨慎考虑迁徙\n\n"
             f"迁徙最终能带来 **{final_npv:+.0f}k** 净收益，但回收期长达 **{breakeven_year} 年**。\n\n"
@@ -324,7 +231,9 @@ with col_d1:
         )
         st.markdown("</div>", unsafe_allow_html=True)
     else:
-        st.markdown("<div class='decision-red'>", unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background:#fef2f2; border: 2px solid #ef4444; border-radius: 12px; padding: 20px; margin: 10px 0;">
+        """, unsafe_allow_html=True)
         st.error(
             f"## ❌ 不建议迁徙\n\n"
             f"在 {remain_years} 年的职业生涯中，迁徙的 NPV 为 **{final_npv:+.0f}k**。\n\n"
@@ -344,7 +253,10 @@ with col_d2:
         st.metric("最终 NPV", f"{final_npv:+.0f}k")
     with c2:
         st.metric("投资回收期", f"{breakeven_year} 年" if breakeven_year else "永不回本")
-        st.metric("户籍壁垒成本", f"-{hukou_cost:.0f}k/年" if hukou_barrier > 0 else "无壁垒")
+        hukou_label = f"-{hukou_cost:.0f}k/年" if hukou_barrier > 0 else "无壁垒"
+        st.metric("户籍壁垒成本", hukou_label)
+        # hukou_cost is negative, so delta_color inverse is appropriate
+        st.metric("", "", delta_color="off")  # placeholder
     
     if talent_subsidy > 0:
         st.metric("政策补贴", f"+{talent_subsidy:.0f}k (一次性)", delta="政策杠杆")
@@ -353,12 +265,11 @@ with col_d2:
     st.markdown("##### 🔮 你的预测 vs 模型")
     if "migrate_pred_done" in st.session_state:
         user_pred_m = st.session_state.get("migrate_pred_answer", "")
-        # 分析哪个因素实际影响最大
         impacts = {
-            "A": abs((w_city - w_home) * 12 * remain_years * 0.8),  # 工资差
-            "B": abs(cost_rent + cost_living) * remain_years,  # 生活成本
-            "C": abs(hukou_cost) * remain_years,  # 制度壁垒
-            "D": abs(final_npv * (1 if remain_years < 20 else 2)),  # 年龄
+            "A": abs((w_city - w_home) * 12 * remain_years * 0.8),
+            "B": abs(cost_rent + cost_living) * remain_years,
+            "C": abs(hukou_cost) * remain_years,
+            "D": abs(final_npv * (1 if remain_years < 20 else 2)),
         }
         actual_top = max(impacts, key=impacts.get)
         map_letter = {"A": "A. 工资差", "B": "B. 生活成本", "C": "C. 制度壁垒", "D": "D. 年龄"}
@@ -374,10 +285,9 @@ st.markdown("</div>", unsafe_allow_html=True)
 # ==========================================
 # 情景对比矩阵
 # ==========================================
-st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-st.markdown("<div class='cyber-header'>📊 三种人生 · NPV 对比</div>", unsafe_allow_html=True)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<div class='card-header'>📊 三种人生 · NPV 对比</div>", unsafe_allow_html=True)
 
-# 计算三种预设情景的 NPV
 def calc_scenario_npv(w_h, w_c, rent, living, hukou_pct, subsidy, years):
     h_cost = hukou_pct / 100 * w_c * 2
     a_benefit = (w_c - w_h) * 12 - rent - living - h_cost
@@ -388,31 +298,25 @@ def calc_scenario_npv(w_h, w_c, rent, living, hukou_pct, subsidy, years):
     be = np.where(np.cumsum(flows / ((1 + 0.05) ** t)) > 0)[0]
     return npv, be[0] + 1 if len(be) > 0 else None
 
-npv_a, be_a = calc_scenario_npv(5, 18, 48, 18, 30, 0, 25)    # 北漂
-npv_b, be_b = calc_scenario_npv(8, 15, 36, 12, 10, 100, 20)   # 返乡
-npv_c, be_c = calc_scenario_npv(8, 20, 30, 10, 5, 150, 30)    # 人才引进
+npv_a, be_a = calc_scenario_npv(5, 18, 48, 18, 30, 0, 25)
+npv_b, be_b = calc_scenario_npv(8, 15, 36, 12, 10, 100, 20)
+npv_c, be_c = calc_scenario_npv(8, 20, 30, 10, 5, 150, 30)
 
 col_s1, col_s2, col_s3 = st.columns(3)
 with col_s1:
-    st.markdown("""
-    ### 🏙️ 小张：北漂青年
-    """)
+    st.markdown("### 🏙️ 小张：北漂青年")
     st.metric("NPV", f"{npv_a:+.0f}k")
     st.metric("回本年限", f"{be_a} 年" if be_a else "永不")
     st.caption("北京 18k vs 老家 5k\n高房租+高户籍壁垒")
     
 with col_s2:
-    st.markdown("""
-    ### 🏡 小李：返乡创业
-    """)
+    st.markdown("### 🏡 小李：返乡创业")
     st.metric("NPV", f"{npv_b:+.0f}k")
     st.metric("回本年限", f"{be_b} 年" if be_b else "永不")
     st.caption("城市 15k vs 家乡 8k\n补贴 100k + 低壁垒")
     
 with col_s3:
-    st.markdown("""
-    ### 🎓 小王：人才引进
-    """)
+    st.markdown("### 🎓 小王：人才引进")
     st.metric("NPV", f"{npv_c:+.0f}k")
     st.metric("回本年限", f"{be_c} 年" if be_c else "永不")
     st.caption("成都 20k vs 老家 8k\n安家费 150k + 低壁垒")
@@ -422,8 +326,8 @@ st.markdown("</div>", unsafe_allow_html=True)
 # ==========================================
 # 中国数据基准 + 课程思政
 # ==========================================
-st.markdown("<div class='tech-card'>", unsafe_allow_html=True)
-st.markdown("<div class='cyber-header'>🇨🇳 中国劳动力流动的现实图景</div>", unsafe_allow_html=True)
+st.markdown("<div class='card'>", unsafe_allow_html=True)
+st.markdown("<div class='card-header'>🇨🇳 中国劳动力流动的现实图景</div>", unsafe_allow_html=True)
 
 col_real, col_ideo = st.columns([1, 1])
 
