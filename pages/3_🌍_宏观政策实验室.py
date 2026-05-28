@@ -256,17 +256,9 @@ if gate_unlocked:
                 st.markdown("""
                 **🚀 技能重塑补贴**
                 - ✅ 降低结构性错配，应对AI冲击最有效的长期手段
-                - 🏛️ 符合国家「新质生产力」战略
+                - 🏛️ 符合国家「新质生产力」战略（详见下方课程思政板块）
                 - 📖 政策方向：人社部「十四五」职业技能培训规划
                 """)
-                st.markdown("""
-                <div style="background:#f3e8ff; border:1px solid #8b5cf6; border-radius:8px; padding:12px; margin:10px 0;">
-                <strong>🏛️ 课程思政 · 新质生产力</strong><br>
-                <span style="font-size:14px;">从"人口红利"转向"人才红利"。技能重塑补贴正是这一国家战略
-                在劳动力市场政策中的体现：投资人力资本，使劳动者从被AI替代的岗位
-                转向AI难以替代的高技能岗位。</span>
-                </div>
-                """, unsafe_allow_html=True)
             elif p == "失业救济金":
                 st.markdown("""
                 **🛡️ 失业救济金**
@@ -276,6 +268,57 @@ if gate_unlocked:
                 """)
 
     st.markdown('</div>', unsafe_allow_html=True)
+
+    # ==========================================
+    # 课程思政 — 独立板块，始终可见
+    # ==========================================
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    render_card_header("🏛️ 课程思政 · 新质生产力与中国劳动力市场变革", color=COLOR["macro"])
+
+    st.markdown("""
+    <div style="background:#f3e8ff; border:1px solid #8b5cf6; border-radius:8px; padding:16px; margin-bottom:14px;">
+    <strong>核心命题：从"人口红利"到"人才红利"</strong><br>
+    <span style="font-size:14px;">
+    2024年政府工作报告提出加快发展「新质生产力」，其核心要义之一是劳动者素质的全面提升。
+    本实验通过贝弗里奇曲线的动态变化，直观展示了这一国家战略在劳动力市场中的具体逻辑：
+    </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_sz1, col_sz2 = st.columns(2)
+    with col_sz1:
+        st.markdown("""
+        **1. 为什么单纯提高最低工资解决不了AI冲击？**
+        > 最低工资是需求侧价格干预——它调整的是「价格」，不是「能力」。
+        > 当结构性失业源于技能错配（贝弗里奇曲线外移），价格下限无法让劳动者
+        > 突然拥有AI时代需要的新技能。
+
+        **2. 技能重塑补贴的深层逻辑**
+        > 这是供给侧人力资本投资——不是给被淘汰的人发钱，
+        > 而是给他们「不被淘汰的能力」。
+        > 它使贝弗里奇曲线向原点回归，不是因为刺激了需求，
+        > 而是劳动力供给与需求重新匹配了。
+        """)
+    with col_sz2:
+        st.markdown("""
+        **3. 高校教育的责任**
+        > 当AI以指数速度替代技能，高等教育的培养方案必须从
+        > 「教固定知识」转向「培养可迁移能力」：
+        > - 批判思维 → 不被AI输出牵着走
+        > - 跨领域整合 → AI做不了的创造性连接
+        > - 伦理判断 → 在AI推荐与社会价值之间做出选择
+
+        **4. 社会公平维度**
+        > 如果技能重塑只覆盖高学历人群，技术鸿沟将加剧社会分化。
+        > 政策设计必须确保低收入、低学历劳动者也能获得培训资源——
+        > 这才是「共同富裕」在劳动力市场中的真正含义。
+        """)
+
+    render_policy_tag("新质生产力", "green")
+    render_policy_tag("人才红利", "blue")
+    render_policy_tag("共同富裕", "orange")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================================
     # 实验报告
