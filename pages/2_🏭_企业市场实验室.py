@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import (
     COLOR, SHARED_CSS,
     render_page_banner, render_card_header,
-    render_challenge_card, render_predict_gate,
+    render_challenge_card, render_predict_gate, render_policy_tag,
     calc_derived_demand, calc_ces_demand,
     generate_lab_report, generate_report_download,
 )
@@ -208,6 +208,46 @@ else:
         st.caption("工资基于工作时间，适用于产出难以量化的工作。监督成本高时可能引发偷懒。")
     else:
         st.caption("工资基于产量，激励强但可能导致质量下降。适用于产出可精确衡量的岗位。")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ==========================================
+# 课程思政 — 独立板块
+# ==========================================
+st.markdown('<div class="card">', unsafe_allow_html=True)
+render_card_header("🏛️ 课程思政 · 技术进步与劳动者的未来", color=COLOR["market"])
+
+col_sz1, col_sz2 = st.columns(2)
+with col_sz1:
+    st.markdown("""
+    **1. 技术替代 ≠ 人的终结**
+    > 希克斯-马歇尔定理告诉我们：技术对劳动需求的影响取决于「替代效应」
+    > 与「规模效应」的博弈。劳动互补型技术反而创造更多岗位。
+    > 关键在于——劳动者是否具备与新技术的「互补技能」。
+
+    **2. 效率工资的中国实践**
+    > 华为、大疆等企业长期支付高于行业平均的薪酬。
+    > 这不是慈善，而是效率工资逻辑：高薪→低流失→高技能积累→高生产率。
+    > 这恰好解释了中国制造业从"低成本竞争"转向"高质量竞争"的微观机制。
+    """)
+with col_sz2:
+    st.markdown("""
+    **3. 薪酬制度与共同富裕**
+    > 计件工资让强者愈强，计时工资给弱者底线——
+    > 薪酬制度的选择本身就是一次社会分配。
+    > 作为未来的HR从业者，你需要意识到：
+    > 薪酬方案不只是一个"管理技术问题"，更是"社会公平问题"。
+
+    **4. 面向AI时代的HR素养**
+    > 当CES函数的σ不断增大（资本与劳动更易互相替代），
+    > HR的核心能力不再是"算工资"或"排班表"，
+    > 而是「人机协作设计」——什么样的任务交给AI，
+    > 什么样的任务必须保留给人类，以及如何让两者互补而非互斥。
+    """)
+
+render_policy_tag("技术伦理", "blue")
+render_policy_tag("效率工资", "green")
+render_policy_tag("共同富裕", "orange")
 
 st.markdown('</div>', unsafe_allow_html=True)
 
