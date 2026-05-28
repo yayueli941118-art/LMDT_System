@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from shared import (
     COLOR, SHARED_CSS,
     render_page_banner, render_card_header,
-    render_challenge_banner, render_predict_verify,
+    render_challenge_card, render_predict_gate,
     calc_derived_demand, calc_ces_demand,
     generate_lab_report, generate_report_download,
 )
@@ -49,10 +49,14 @@ use_ces = st.toggle("🧪 启用CES高级模型", value=False,
 # ==========================================
 # 挑战模式
 # ==========================================
-render_challenge_banner("market", [
-    ("🏭", "最优雇佣决策", "资本存量设为60，产品价格2.0，劳动替代型技术。找到使企业雇佣50人的工资率。\n提示：观察需求曲线的反函数"),
-    ("💰", "效率工资之谜", "为什么企业愿意支付高于市场出清的工资？调整薪酬模式为「效率工资」，解释其理论逻辑"),
-])
+render_challenge_card(
+    title="最优雇佣决策",
+    description="资本存量设为 <b style='color:#2563eb;'>60</b>，产品价格 <b style='color:#2563eb;'>2.0</b>，劳动替代型技术。找到使企业雇佣 <b style='color:#10b981;'>50人</b> 的工资率。提示：观察需求曲线的反函数。",
+    theme="green"
+)
+with st.expander("📋 更多挑战", expanded=False):
+    st.markdown("##### 💰 效率工资之谜")
+    st.caption("为什么企业愿意支付高于市场出清的工资？调整薪酬模式为「效率工资」，解释其理论逻辑。")
 
 # 挑战模式约束
 if "market_attempts" not in st.session_state:
@@ -73,12 +77,19 @@ st.markdown('<div class="card">', unsafe_allow_html=True)
 render_card_header("📉 希克斯-马歇尔派生需求仿真", color=COLOR["market"], dark_color="#065f46")
 
 # 预测-验证
-pred_done, pred_correct, pred_answer = render_predict_verify(
-    question="当技术进步为「劳动替代型」时，劳动需求曲线会如何变化？",
+gate_unlocked = render_predict_gate(
+    question="**当技术进步为「劳动替代型」时，劳动需求曲线会如何变化？**",
     options=["A. 向右平移（需求增加）", "B. 向左平移（需求减少）", "C. 斜率变化但位置不变"],
-    correct_answer="B. 向左平移（需求减少）",
     var_name="market_dd"
 )
+if gate_unlocked:
+    user_ans = st.session_state.get("market_dd_answer", "")
+    if "B" in user_ans:
+        st.success("✅ 预测正确！劳动替代型技术减少劳动力需求，曲线左移。")
+    else:
+        st.info("📚 让我们看看实验结果——")
+else:
+    st.stop()
 
 # 参数
 st.markdown("**📌 调节实验参数**")
